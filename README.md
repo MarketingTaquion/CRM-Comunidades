@@ -28,4 +28,4 @@ mockups/panel-admin-6-versiones.html → exploración visual previa (6 direccion
 
 ## Deploy
 
-Pensado para Netlify (o Vercel, sin cambios) — sitio estático, sin variables de entorno todavía porque no hay conexión real a Supabase. Cuando se conecte Supabase (paso 1 de arriba), sumar `SUPABASE_URL` / `SUPABASE_ANON_KEY` como variables de entorno del sitio, igual que en `ignite-brief`.
+**Live: https://crm-comunidades-taquion.netlify.app** — proyecto `crm-comunidades-taquion` en Netlify, team `Marketing-Taquion-IGNITE`, deploy automático desde `master` de este repo. Sitio estático, sin build step (`netlify.toml` con `publish = "."`), sin variables de entorno todavía porque no hay conexión real a Supabase. Cuando se conecte Supabase (paso 1 de arriba), sumar `SUPABASE_URL` / `SUPABASE_ANON_KEY` como variables de entorno del sitio, igual que en `ignite-brief`.
