@@ -21,10 +21,19 @@ html,body{margin:0;height:100%}
 body{background:var(--bg); color:var(--text-body); font-family:var(--font); -webkit-font-smoothing:antialiased; font-variant-numeric:tabular-nums}
 h1,h2,h3,h4{color:var(--text-strong); margin:0; font-weight:900; letter-spacing:-.01em}
 p{margin:0}
-button,select{font-family:inherit}
+button,select,input{font-family:inherit}
 ::selection{background:var(--tq-fucsia); color:#fff}
 
 .app{display:grid; grid-template-columns:252px 1fr; min-height:100vh}
+
+/* ---------- login ---------- */
+.login-screen{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px}
+.login-card{width:100%; max-width:360px; background:var(--panel); border:1px solid var(--border); border-radius:var(--r-card); padding:28px}
+.login-card label{display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-faint); margin:16px 0 6px}
+.login-card input{width:100%; background:var(--panel-raised); border:1px solid var(--border-strong); color:#fff; font-size:14px; padding:10px 11px; border-radius:var(--r-in)}
+.login-card input:focus{outline:2px solid var(--tq-fucsia); outline-offset:1px}
+.login-error{color:var(--tq-naranja); font-size:12px; margin-top:12px; min-height:1em}
+.login-note{font-size:11px; color:var(--text-faint); margin-top:18px; line-height:1.5}
 
 /* ---------- sidebar ---------- */
 .sidebar{background:var(--panel-sunken); border-right:1px solid var(--border); padding:20px 16px; display:flex; flex-direction:column}
@@ -53,6 +62,8 @@ button,select{font-family:inherit}
 .sidebar-foot{margin-top:auto; padding-top:16px; border-top:1px solid var(--border)}
 .role-caption{font-size:11px; color:var(--text-faint); line-height:1.5; margin-top:8px}
 .role-caption b{color:var(--text-muted)}
+.session-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; font-size:11px; color:var(--text-faint)}
+.session-row button{background:none; border:none; color:var(--tq-azul); font-size:11px; cursor:pointer; padding:0}
 
 /* ---------- main ---------- */
 .main{padding:26px 32px 60px; max-width:1220px}
@@ -87,11 +98,12 @@ tbody tr:last-child td{border-bottom:none}
 tbody tr:hover{background:var(--panel-raised)}
 .tbl-wrap{overflow-x:auto}
 .mono{font-variant-numeric:tabular-nums; color:var(--text-muted)}
+.empty-row td{color:var(--text-faint); text-align:center; padding:22px 12px}
 
 .pill{display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:var(--r-full); font-size:10.5px; font-weight:700; letter-spacing:.02em; white-space:nowrap; border:1px solid transparent}
 .state-anonimo{color:var(--text-faint); border-color:var(--border-strong); background:rgba(255,255,255,.02)}
-.state-pseudo{color:var(--text-muted); border-color:var(--border-strong); background:rgba(255,255,255,.03)}
-.state-semi{color:var(--tq-azul); border-color:rgba(91,124,255,.4); background:rgba(91,124,255,.08)}
+.state-pseudo_anonimo{color:var(--text-muted); border-color:var(--border-strong); background:rgba(255,255,255,.03)}
+.state-semi_identificado{color:var(--tq-azul); border-color:rgba(91,124,255,.4); background:rgba(91,124,255,.08)}
 .state-identificado{color:var(--tq-azul); border-color:rgba(91,124,255,.55); background:rgba(91,124,255,.14); font-weight:800}
 .state-enriquecido{color:var(--tq-naranja); border-color:rgba(255,169,0,.45); background:rgba(255,169,0,.1)}
 .state-confirmado{color:var(--tq-fucsia); border-color:rgba(255,0,184,.45); background:rgba(255,0,184,.1)}
@@ -100,7 +112,6 @@ tbody tr:hover{background:var(--panel-raised)}
 .funnel-step{background:var(--panel); border:1px solid var(--border); border-radius:var(--r-card); padding:14px 14px; position:relative}
 .funnel-step .v{font-size:19px; font-weight:900; color:#fff}
 .funnel-step .l{font-size:10.5px; color:var(--text-muted); margin-top:5px}
-.funnel-step .drop{font-size:10px; color:var(--tq-naranja); margin-top:8px; padding-top:8px; border-top:1px solid var(--border)}
 .funnel-arrow{position:absolute; right:-14px; top:50%; transform:translateY(-50%); color:var(--text-faint); font-size:14px}
 .funnel-step:last-child .funnel-arrow{display:none}
 
@@ -129,11 +140,26 @@ tbody tr:hover{background:var(--panel-raised)}
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="ico-lock" viewBox="0 0 16 16"><rect x="3.25" y="7.25" width="9.5" height="6.75" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7.25V5.4a2.5 2.5 0 0 1 5 0v1.85" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
-  <symbol id="ico-eye" viewBox="0 0 16 16"><path d="M1 8s2.6-4.5 7-4.5S15 8 15 8s-2.6 4.5-7 4.5S1 8 1 8z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.3"/></symbol>
   <symbol id="ico-comunidad" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="10" cy="10" r="2.6" fill="currentColor"/><path d="M10 1.5v3M10 15.5v3M1.5 10h3M15.5 10h3" stroke="currentColor" stroke-width="1.4"/></symbol>
 </svg>
 
-<div class="app">
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="brand"><svg viewBox="0 0 20 20" style="color:var(--tq-fucsia)"><use href="#ico-comunidad"/></svg><b>Comunidades</b></div>
+    <div class="brand-sub" style="margin-left:0">CRM interno · Taquion</div>
+    <form id="loginForm">
+      <label for="loginEmail">Email</label>
+      <input type="email" id="loginEmail" autocomplete="username" required>
+      <label for="loginPassword">Contraseña</label>
+      <input type="password" id="loginPassword" autocomplete="current-password" required>
+      <button type="submit" class="btn btn-fill" style="width:100%; justify-content:center; margin-top:20px">Ingresar</button>
+    </form>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-note">Acceso restringido a admin_taquion por ahora (specs/006) — los roles AM-Estratega y cliente todavía no tienen login propio.</div>
+  </div>
+</div>
+
+<div class="app" id="app" hidden>
   <aside class="sidebar">
     <div class="brand"><svg viewBox="0 0 20 20" style="color:var(--tq-fucsia)"><use href="#ico-comunidad"/></svg><b>Comunidades</b></div>
     <div class="brand-sub">CRM interno · Taquion</div>
@@ -150,6 +176,7 @@ tbody tr:hover{background:var(--panel-raised)}
     </div>
 
     <div class="sidebar-foot">
+      <div class="session-row"><span id="sessionEmail">—</span><button id="btnLogout">Cerrar sesión</button></div>
       <div class="eyebrow" style="margin-bottom:6px">Ver como rol</div>
       <select class="field" id="selRole" style="margin-bottom:0">
         <option value="admin_taquion">admin_taquion</option>
@@ -172,94 +199,18 @@ tbody tr:hover{background:var(--panel-raised)}
   </main>
 </div>
 
-<script>
-/* ============================================================ *
- * Datos de ejemplo — 3 comunidades, estructura de 6 activos      *
- * ============================================================ */
-const COMUNIDADES = {
-  umc: { nombre:'Un Metro Cuadrado', cliente:'GCBA', etapaIdx:4, etapaLabel:'Activar',
-    enabled:{conocimiento:1,voz:1,crecimiento:1,relacion:1,activaciones:0,decisiones:0} },
-  tup: { nombre:'Todo un País', cliente:'San Luis', etapaIdx:4, etapaLabel:'Activar',
-    enabled:{conocimiento:1,voz:1,crecimiento:1,relacion:1,activaciones:0,decisiones:0} },
-  cej: { nombre:'Cortado en Jarrito', cliente:'GCBA', etapaIdx:3, etapaLabel:'Diseñar',
-    enabled:{conocimiento:1,voz:1,crecimiento:0,relacion:0,activaciones:0,decisiones:0} },
-};
+<script src="config.js"></script>
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const CONTENT = {
-  umc: {
-    conocimiento:{
-      kpis:[['612','Mensajes analizados (semana)','umbral mínimo 400–600 — OK'],
-            ['58%','Sentiment positivo','+8.4% vs. baseline'],
-            ['2/3','Corredores con volumen suficiente','Corredor Sur sub-representado'],
-            ['Media','Confianza del arquetipado','mes 4 de comunidad activa']],
-      arquetipos:[['Marta — indignada racional',38],['Tomás — creativo cultural',27],['Carlos — constructor',21],['Sofi + Joaco — familia joven',14]],
-      brecha:[['Seguridad',184,'Negativo','Corredor Sur'],['Espacios públicos',146,'Positivo','Corredor Norte'],['Movilidad',98,'Neutro','Corredor Centro'],['Basura',77,'Negativo','Corredor Sur']]
-    },
-    voz:{
-      kpis:[['24','Piezas publicadas (mes)','plan editorial mensual'],['+6.2%','Crecimiento de audiencia','promedio todas las plataformas'],['Reel #14','Mejor pieza del mes','retención 68%']],
-      canales:[['Instagram',12,'48.200','3.4%','Graph API'],['YouTube',4,'19.500','Retención 51%','Data + Analytics API'],['Spotify',4,'2.100 listeners','—','CSV manual (lunes)'],['TikTok',4,'31.000','6.1%','manual']]
-    },
-    crecimiento:{
-      funnel:[['Anónimo',48200,'awareness',null],['Pseudo-anónimo',12400,'pixel / clic','26%'],['Semi-identificado',5100,'teléfono vía WA','41%'],['Identificado',2760,'onboarding OK','54%'],['Enriquecido',1180,'activo recurrente','43%'],['Confirmado',340,'cruzado con encuesta','29%']],
-      kpis:[['$2.180','CPME','Costo por Miembro Efectivo · target < $2.500'],['74%','TRG','Tasa de Retención del Grupo (30 días)'],['0.18','K-Factor','miembros traídos por referido / miembro'],['46%','Drop onboarding → bot','benchmark 40–60% — dentro de rango']]
-    },
-    relacion:{
-      filtros:['Corredor Norte, Centro, Sur','Arquetipo','Estado'],
-      contactos:[
-        ['semi','Corredor Norte','sin asignar','1/5','hace 2h',null],
-        ['identificado','Corredor Centro','sin asignar','2/5','hace 1 día',null],
-        ['identificado','Corredor Sur','sin asignar','3/5','hace 3 días',null],
-        ['enriquecido','Corredor Norte','Sofi + Joaco (familia joven)','4/5','hace 5 días',null],
-        ['enriquecido','Corredor Centro','Marta (indignada racional)','4/5','hace 1 semana',null],
-        ['confirmado','Corredor Sur','Tomás (creativo cultural)','5/5','hace 2h','T. Aranda'],
-        ['semi','Corredor Norte','sin asignar','1/5','hace 1 día',null],
-        ['identificado','Corredor Centro','sin asignar','2/5','hace 3 días',null],
-      ],
-      mapaVoces:[['T. Aranda','Corredor Sur','Tomás (creativo cultural)','5/5','0.82'],['M. Suárez','Corredor Centro','Marta (indignada racional)','5/5','0.77'],['C. Beltrán','Corredor Norte','Carlos (constructor)','4/5','0.69']]
-    }
-  },
-  tup: {
-    conocimiento:{
-      kpis:[['340','Mensajes analizados (semana)','umbral mínimo 400 — por debajo, atención'],
-            ['—','Sentiment positivo','sin volumen suficiente aún'],
-            ['2/3','Localidades con volumen suficiente','La Toma sub-representada'],
-            ['Sin arquetipar','Arquetipado','no se corrió el modelo — no confundir con "sin datos"']],
-      arquetipos:null,
-      brecha:[['Seguridad',96,'Negativo','San Luis Capital'],['Espacios públicos',61,'Positivo','Quines'],['Movilidad',44,'Neutro','La Toma'],['Basura',33,'Negativo','San Luis Capital']]
-    },
-    voz:{
-      kpis:[['14','Piezas publicadas (mes)','plan editorial mensual'],['+3.8%','Crecimiento de audiencia','promedio todas las plataformas'],['Reel Quines #3','Mejor pieza del mes','retención 54%']],
-      canales:[['Instagram',9,'21.400','2.9%','Graph API'],['WhatsApp (broadcast)',5,'1.842 miembros','—','ManyChat']]
-    },
-    crecimiento:{
-      funnel:[['Anónimo',14200,'awareness',null],['Pseudo-anónimo',6100,'pixel / clic','57%'],['Semi-identificado',3400,'teléfono vía WA','44%'],['Identificado',1842,'onboarding OK','46%'],['Enriquecido',602,'activo recurrente','67%'],['Confirmado',0,'cruzado con encuesta','—']],
-      kpis:[['$2.150','CPME','target < $2.500'],['64%','TRG','retención de grupo (30 días)'],['1.21','K-Factor','crecimiento por referido'],['34%','Drop onboarding → bot','benchmark <30% — leve atención']]
-    },
-    relacion:{
-      filtros:['San Luis Capital, Quines, La Toma','Interés declarado','Estado'],
-      contactos:[
-        ['semi','Quines','—','1/5','hace 4h',null],
-        ['identificado','San Luis Capital','Seguridad','4/5','hace 1 día','R. Gómez'],
-        ['identificado','La Toma','Movilidad','3/5','hace 2 días','M. Ibáñez'],
-        ['pseudo','San Luis Capital','—','1/5','hace 3 días',null],
-        ['enriquecido','Quines','Seguridad','5/5','hace 5 días','J. Peralta'],
-        ['identificado','San Luis Capital','Basura','1/5','hace 1 semana',null],
-      ],
-      mapaVoces:[['J. Peralta','Quines','Seguridad (interés)','5/5','0.71']]
-    }
-  },
-  cej: {
-    conocimiento:{
-      kpis:[['4','Arquetipos definidos','C1 / C4 / C5 / C6'],['C4','Prioridad #1','Felipe, el porteño orgulloso'],['C6','Prioridad #2','Martina, la que busca experiencias'],['2','Excluidos por riesgo','C2/C3 — carga ideológica alta']],
-      arquetipos:[['C4 Felipe — conformes optimistas',18],['C6 Martina — cosmopolitas',16],['C1 Sandra — desideologizados',21],['C5 Daniel — conservadores frustrados',12]],
-      brecha:null
-    },
-    voz:{
-      kpis:[['8','Piezas publicadas (mes)','fase piloto de contenido'],['—','Crecimiento de audiencia','sin baseline aún'],['—','Mejor pieza del mes','sin datos suficientes']],
-      canales:[['Instagram',8,'—','—','piloto, sin cuenta Business vinculada aún']]
-    }
-  }
-};
+/* ============================================================ *
+ * Conexión real a Supabase (schema crm_comunidades)              *
+ * Config generada en build time — ver scripts/generate-config.js *
+ * ============================================================ */
+const cfg = window.CRM_COMUNIDADES_CONFIG || {};
+const supabase = (cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY)
+  ? createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, { db: { schema: 'crm_comunidades' } })
+  : null;
 
 const ACTIVOS = ['conocimiento','voz','crecimiento','relacion','activaciones','decisiones'];
 const ACTIVO_LABEL = {conocimiento:'Conocimiento',voz:'Voz',crecimiento:'Crecimiento',relacion:'Relación',activaciones:'Activaciones',decisiones:'Decisiones'};
@@ -271,13 +222,130 @@ const ACTIVO_SUB = {
   activaciones:'El negocio entra a la comunidad',
   decisiones:'La comunidad, convertida en decisiones',
 };
-const STATE_LABEL = {anonimo:'anónimo',pseudo:'pseudo-anónimo',semi:'semi identificado',identificado:'identificado',enriquecido:'enriquecido',confirmado:'confirmado'};
+const ESTADO_ORDEN = ['anonimo','pseudo_anonimo','semi_identificado','identificado','enriquecido','confirmado'];
+const ESTADO_LABEL = {anonimo:'anónimo',pseudo_anonimo:'pseudo-anónimo',semi_identificado:'semi identificado',identificado:'identificado',enriquecido:'enriquecido',confirmado:'confirmado'};
 
-let state = { comunidad:'umc', activo:'conocimiento', role:'cliente' };
+// state.comunidades: Map<id, {nombre_interno, cliente, etapa, enabled:{activo:bool}}>
+let state = { comunidad:null, activo:'conocimiento', role:'admin_taquion', comunidades:new Map() };
+
+/* ---------- auth ---------- */
+const loginScreen = document.getElementById('loginScreen');
+const appEl = document.getElementById('app');
+const loginForm = document.getElementById('loginForm');
+const loginError = document.getElementById('loginError');
+
+function showLoginError(msg){ loginError.textContent = msg; }
+
+if (!supabase) {
+  showLoginError('Config no disponible — falta SUPABASE_URL/SUPABASE_ANON_KEY (variables de entorno de Netlify). El sitio se deployó sin ellas, ver README.md.');
+  loginForm.querySelector('button').disabled = true;
+} else {
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    showLoginError('');
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) showLoginError(error.message === 'Invalid login credentials' ? 'Email o contraseña incorrectos.' : error.message);
+  });
+
+  document.getElementById('btnLogout').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+  });
+
+  supabase.auth.onAuthStateChange((_event, session) => {
+    if (session) enterApp(session);
+    else { appEl.hidden = true; loginScreen.hidden = false; }
+  });
+
+  supabase.auth.getSession().then(({ data }) => {
+    if (data.session) enterApp(data.session);
+  });
+}
+
+async function enterApp(session){
+  loginScreen.hidden = true;
+  appEl.hidden = false;
+  document.getElementById('sessionEmail').textContent = session.user.email;
+  await loadComunidades();
+  populateSidebar();
+  renderAll();
+}
+
+/* ---------- carga de datos reales ---------- */
+async function loadComunidades(){
+  const { data: comunidades, error: e1 } = await supabase
+    .from('comunidad').select('id, nombre_interno, cliente, etapa, temporada_numero').order('nombre_interno');
+  const { data: activos, error: e2 } = await supabase
+    .from('comunidad_activo').select('comunidad_id, activo, habilitado');
+
+  if (e1 || e2) {
+    document.getElementById('content').innerHTML =
+      `<div class="card"><h3>No se pudo cargar la base</h3><div class="sub" style="margin-bottom:0; color:var(--tq-naranja)">${(e1||e2).message}</div></div>`;
+    return;
+  }
+
+  state.comunidades = new Map();
+  (comunidades||[]).forEach(c => {
+    state.comunidades.set(c.id, { ...c, enabled:{} });
+  });
+  (activos||[]).forEach(a => {
+    const c = state.comunidades.get(a.comunidad_id);
+    if (c) c.enabled[a.activo] = a.habilitado;
+  });
+
+  if (!state.comunidad || !state.comunidades.has(state.comunidad)) {
+    const first = [...state.comunidades.values()].find(c => c.nombre_interno === 'Un Metro Cuadrado') || [...state.comunidades.values()][0];
+    state.comunidad = first ? first.id : null;
+  }
+}
+
+function relTime(iso){
+  if (!iso) return '—';
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const h = Math.floor(diffMs / 3600000);
+  if (h < 1) return 'hace instantes';
+  if (h < 24) return `hace ${h}h`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `hace ${d} día${d>1?'s':''}`;
+  return `hace ${Math.floor(d/7)} semana${Math.floor(d/7)>1?'s':''}`;
+}
+
+async function loadContactos(comunidadId){
+  const { data, error } = await supabase
+    .from('contacto')
+    .select('id, estado_identificacion, corredor_localidad, interes_declarado, nivel_activacion, nombre_declarado, updated_at, arquetipo:arquetipo_id(nombre)')
+    .eq('comunidad_id', comunidadId)
+    .order('nivel_activacion', { ascending:false, nullsFirst:false });
+  if (error) throw error;
+  return data || [];
+}
+
+async function loadFunnel(comunidadId){
+  const { data, error } = await supabase
+    .from('contacto').select('estado_identificacion').eq('comunidad_id', comunidadId);
+  if (error) throw error;
+  const counts = Object.fromEntries(ESTADO_ORDEN.map(k => [k, 0]));
+  (data||[]).forEach(r => { counts[r.estado_identificacion] = (counts[r.estado_identificacion]||0) + 1; });
+  return counts;
+}
+
+async function loadMapaVoces(comunidadId){
+  const { data, error } = await supabase
+    .from('mapa_de_voces').select('*').eq('comunidad_id', comunidadId)
+    .order('nivel_activacion', { ascending:false });
+  if (error) throw error;
+  return data || [];
+}
+
+async function loadExportNivel1(comunidadId){
+  const { data, error } = await supabase
+    .from('export_nivel1_agregado').select('*').eq('comunidad_id', comunidadId);
+  if (error) throw error;
+  return data || [];
+}
 
 /* ---------- helpers de render ---------- */
-function esc(s){ return s===null||s===undefined ? '' : s; }
-
 function kpiGrid(items){
   return '<div class="kpi-grid">' + items.map(([v,l,t])=>
     `<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div><div class="t">${t}</div></div>`
@@ -288,108 +356,130 @@ function lockedPanel(msg){
   return `<div class="locked-panel"><svg><use href="#ico-lock"/></svg><b>Activo deshabilitado</b><span>${msg}</span></div>`;
 }
 
-function renderConocimiento(d){
-  let html = kpiGrid(d.kpis);
-  if(d.arquetipos){
-    html += `<div class="card"><h3>Distribución de arquetipos</h3><div class="sub">Solo contactos identificados o más — no incluye anónimos/pseudo-anónimos.</div>` +
-      d.arquetipos.map(([n,p])=>`<div class="bar-row"><span>${n}</span><div class="bar-track"><div class="bar-fill" style="width:${p*2.4}%"></div></div><span class="bar-val">${p}%</span></div>`).join('') +
-      `</div>`;
-  } else {
-    html += `<div class="card"><h3>Distribución de arquetipos</h3><div class="sub" style="margin-bottom:0">Aún no se corrió el modelo de arquetipación para esta comunidad — distinto de "sin datos": todavía no se intentó.</div></div>`;
-  }
-  if(d.brecha){
-    html += `<div class="card"><h3>Brecha semántica — ejes temáticos más mencionados</h3><div class="sub">Salida del análisis de conversación de WhatsApp + comentarios de RRSS (Claude API).</div>
-      <div class="tbl-wrap"><table><thead><tr><th>Eje</th><th>Menciones</th><th>Sentiment</th><th>Corredor con mayor peso</th></tr></thead><tbody>` +
-      d.brecha.map(([eje,m,s,c])=>`<tr><td>${eje}</td><td class="mono">${m}</td><td>${s}</td><td>${c}</td></tr>`).join('') +
-      `</tbody></table></div></div>`;
-  } else {
-    html += `<div class="card"><h3>Brecha semántica</h3><div class="sub" style="margin-bottom:0">Sin volumen de conversación suficiente todavía para calcular ejes temáticos.</div></div>`;
-  }
-  return html;
+function notConnectedPanel(nombre){
+  return `<div class="card"><h3>${nombre} todavía no tiene fuente de datos conectada</h3>
+    <div class="sub" style="margin-bottom:0">Este activo está habilitado para la comunidad, pero el esquema de <code>crm_comunidades</code> hoy no modela sentiment, piezas publicadas ni brecha semántica (specs/006, "Fuera de alcance": análisis de sentimiento/tópicos queda como fase posterior). En vez de simular estos números, esta vista queda honestamente vacía hasta que se sume esa fuente real.</div></div>`;
 }
 
-function renderVoz(d){
-  return kpiGrid(d.kpis) +
-    `<div class="card"><h3>Rendimiento por canal</h3><div class="sub">Cada fila declara su propia fuente técnica — nunca un promedio disfrazado de dato único.</div>
-    <div class="tbl-wrap"><table><thead><tr><th>Canal</th><th>Piezas</th><th>Reach</th><th>Engagement</th><th>Fuente técnica</th></tr></thead><tbody>` +
-    d.canales.map(([c,p,r,e,f])=>`<tr><td>${c}</td><td class="mono">${p}</td><td class="mono">${r}</td><td>${e}</td><td style="color:var(--text-muted)">${f}</td></tr>`).join('') +
-    `</tbody></table></div></div>`;
-}
+function stateClass(k){ return 'state-' + k; }
 
-function renderCrecimiento(d){
-  const funnel = `<div class="funnel">` + d.funnel.map(([n,v,sub,drop],i)=>
-    `<div class="funnel-step"><div class="v">${v.toLocaleString('es-AR')}</div><div class="l">${n}<br>${sub}</div>${drop?`<div class="drop">${drop==='—'?'sin caída medible':'−'+drop+' vs. paso anterior'}</div>`:''}${i<d.funnel.length-1?'<span class="funnel-arrow">→</span>':''}</div>`
-  ).join('') + `</div>`;
-  return `<div class="card"><h3>Funnel de identificación</h3><div class="sub">Un solo contacto avanzando por su <code>estado_identificacion</code> — no dos bases separadas.</div>${funnel}</div>` + kpiGrid(d.kpis);
-}
-
-function stateClass(k){ return {anonimo:'state-anonimo',pseudo:'state-pseudo',semi:'state-semi',identificado:'state-identificado',enriquecido:'state-enriquecido',confirmado:'state-confirmado'}[k]; }
-
-function contactName(row, role){
-  const [estado,,,,,nombre] = row;
-  if(role==='cliente') return estado==='anonimo'||estado==='pseudo' ? 'anónimo' : 'contacto (oculto)';
-  if(!nombre) return estado==='anonimo'||estado==='pseudo' ? 'anónimo' : 'contacto identificado';
+function contactName(c, role){
+  const nombre = c.nombre_declarado;
+  const estado = c.estado_identificacion;
+  if (role === 'cliente') return (estado==='anonimo'||estado==='pseudo_anonimo') ? 'anónimo' : 'contacto (oculto)';
+  if (!nombre) return (estado==='anonimo'||estado==='pseudo_anonimo') ? 'anónimo' : 'contacto identificado';
   // admin_taquion y am_estratega ven nombre solo si el contacto ya está enriquecido/confirmado
-  if(estado==='enriquecido' || estado==='confirmado') return nombre;
+  if (estado==='enriquecido' || estado==='confirmado') return nombre;
   return 'contacto identificado';
 }
 
-function renderRelacion(d, role){
-  const rows = d.contactos.map(row=>{
-    const [estado,corredor,arq,nivel,ultima] = row;
-    return `<tr><td>${contactName(row,role)}</td><td><span class="pill ${stateClass(estado)}">${STATE_LABEL[estado]}</span></td><td>${corredor}</td><td>${arq}</td><td class="mono">${nivel}</td><td style="color:var(--text-faint)">${ultima}</td></tr>`;
-  }).join('');
-  const tabla = `<div class="card"><h3>Contactos</h3><div class="sub">Qué columna de identidad se ve depende del rol activo — así se aplica la gobernanza de visibilidad.</div>
-    <div class="filters"><select disabled><option>${d.filtros[0]}</option></select><select disabled><option>${d.filtros[1]}</option></select><select disabled><option>${d.filtros[2]}</option></select></div>
-    <div class="tbl-wrap"><table><thead><tr><th>Contacto</th><th>Estado</th><th>Corredor / localidad</th><th>Arquetipo / interés</th><th>Nivel activación</th><th>Última interacción</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+function renderConocimiento(c){ return notConnectedPanel('Conocimiento'); }
+function renderVoz(c){ return notConnectedPanel('Voz'); }
+
+function renderCrecimiento(counts){
+  const drops = {};
+  for (let i=1;i<ESTADO_ORDEN.length;i++){
+    const prev = counts[ESTADO_ORDEN[i-1]], cur = counts[ESTADO_ORDEN[i]];
+    drops[ESTADO_ORDEN[i]] = prev>0 ? Math.round((1 - cur/prev)*100) : null;
+  }
+  const funnel = `<div class="funnel">` + ESTADO_ORDEN.map((k,i)=>{
+    const drop = drops[k];
+    return `<div class="funnel-step"><div class="v">${counts[k].toLocaleString('es-AR')}</div><div class="l">${ESTADO_LABEL[k]}</div>${drop!==null?`<div style="font-size:10px;color:var(--tq-naranja);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">−${drop}% vs. paso anterior</div>`:''}${i<ESTADO_ORDEN.length-1?'<span class="funnel-arrow">→</span>':''}</div>`;
+  }).join('') + `</div>`;
+  return `<div class="card"><h3>Funnel de identificación</h3><div class="sub">Un solo contacto avanzando por su <code>estado_identificacion</code> — no dos bases separadas. Conteo real de <code>crm_comunidades.contacto</code>.</div>${funnel}</div>` +
+    `<div class="card"><h3>CPME · CPMR · TRG · K-Factor</h3><div class="sub" style="margin-bottom:0">Estos KPIs requieren datos de inversión en pauta y retención semanal que todavía no están cargados en la base (no hay tabla de spend). Se agregan cuando se conecte esa fuente — no se fabrican acá.</div></div>`;
+}
+
+function renderRelacion(contactos, mapaVoces, role){
+  const rows = contactos.length
+    ? contactos.map(c => {
+        const arqOInteres = c.arquetipo?.nombre || c.interes_declarado || 'sin asignar';
+        return `<tr><td>${contactName(c, role)}</td><td><span class="pill ${stateClass(c.estado_identificacion)}">${ESTADO_LABEL[c.estado_identificacion]}</span></td><td>${c.corredor_localidad||'—'}</td><td>${arqOInteres}</td><td class="mono">${c.nivel_activacion ?? '—'}/5</td><td style="color:var(--text-faint)">${relTime(c.updated_at)}</td></tr>`;
+      }).join('')
+    : `<tr class="empty-row"><td colspan="6">Sin contactos cargados todavía para esta comunidad.</td></tr>`;
+
+  const tabla = `<div class="card"><h3>Contactos</h3><div class="sub">Qué columna de identidad se ve depende del rol activo — así se aplica la gobernanza de visibilidad. ${contactos.length} contacto(s) reales.</div>
+    <div class="tbl-wrap"><table><thead><tr><th>Contacto</th><th>Estado</th><th>Corredor / localidad</th><th>Arquetipo / interés</th><th>Nivel activación</th><th>Última actualización</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 
   let mapa;
-  if(role==='cliente'){
+  if (role === 'cliente') {
     mapa = `<div class="card"><h3>Mapa de Voces (Top Activadores)</h3><div class="sub" style="margin-bottom:0">Uso interno de Taquión — nunca visible para el rol cliente.</div>${lockedPanel('No disponible para el rol cliente.')}</div>`;
   } else {
-    mapa = `<div class="card"><h3>Mapa de Voces (Top Activadores)</h3><div class="sub">Vista filtrada sobre la misma tabla de contactos — estado Enriquecido/Confirmado + nivel de activación alto. No es una tabla aparte.</div>
-      <div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>Corredor</th><th>Arquetipo</th><th>Nivel</th><th>Afinidad narrativa</th></tr></thead><tbody>` +
-      d.mapaVoces.map(([n,c,a,nv,af])=>`<tr><td style="color:#fff">${n}</td><td>${c}</td><td>${a}</td><td class="mono">${nv}</td><td class="mono">${af}</td></tr>`).join('') +
-      `</tbody></table></div></div>`;
+    const mvRows = mapaVoces.length
+      ? mapaVoces.map(m => `<tr><td style="color:#fff">${m.nombre||'—'}</td><td>${m.corredor_localidad||'—'}</td><td>${m.arquetipo||'—'}</td><td class="mono">${m.nivel_activacion}/5</td><td class="mono">${m.afinidad_narrativa_principal||'—'}</td></tr>`).join('')
+      : `<tr class="empty-row"><td colspan="5">Ningún contacto llegó todavía al criterio de Mapa de Voces (Enriquecido/Confirmado + 3+ semanas + nivel ≥ 4).</td></tr>`;
+    mapa = `<div class="card"><h3>Mapa de Voces (Top Activadores)</h3><div class="sub">Vista <code>mapa_de_voces</code> — filtro real sobre la misma tabla de contactos, no una tabla aparte.</div>
+      <div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>Corredor</th><th>Arquetipo</th><th>Nivel</th><th>Afinidad narrativa</th></tr></thead><tbody>${mvRows}</tbody></table></div></div>`;
   }
   return tabla + mapa;
 }
 
-function renderExport(role){
-  const canNivel2 = role!=='cliente';
-  const canNivel3 = role==='admin_taquion';
+function toCsv(rows){
+  if (!rows.length) return '';
+  const cols = Object.keys(rows[0]);
+  const esc = v => `"${String(v ?? '').replace(/"/g,'""')}"`;
+  return [cols.join(','), ...rows.map(r => cols.map(c => esc(r[c])).join(','))].join('\n');
+}
+
+function downloadFile(name, content, type){
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click();
+  a.remove(); URL.revokeObjectURL(url);
+}
+
+function renderExport(role, comunidadId, comunidadNombre){
+  const canNivel2 = role !== 'cliente';
+  const canNivel3 = role === 'admin_taquion';
+  setTimeout(() => {
+    const btn = document.getElementById('btnExportNivel1');
+    if (btn) btn.onclick = async () => {
+      btn.disabled = true; btn.textContent = 'Exportando…';
+      try {
+        const rows = await loadExportNivel1(comunidadId);
+        downloadFile(`export-nivel1-${comunidadNombre.toLowerCase().replace(/\s+/g,'-')}.csv`, toCsv(rows), 'text/csv');
+      } catch (err) {
+        alert('Error exportando: ' + err.message);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Exportar CSV';
+      }
+    };
+  }, 0);
   return `<div class="export-grid">
     <div class="export-card"><div class="head"><span class="export-dot" style="background:var(--tq-azul)"></span><b style="color:#fff;font-size:13px">Nivel 1 · Operativo/cliente</b></div>
-      <p>Agregado por arquetipo, corredor y nivel de activación. Nunca nombre, teléfono ni username individual — sin importar el estado de identificación del contacto agregado.</p>
-      <button class="btn btn-fill">Exportar CSV</button> <button class="btn">Exportar XLSX</button></div>
+      <p>Agregado por arquetipo, corredor y nivel de activación — vista <code>export_nivel1_agregado</code>. Nunca nombre, teléfono ni username individual.</p>
+      <button class="btn btn-fill" id="btnExportNivel1">Exportar CSV</button></div>
     <div class="export-card"><div class="head"><span class="export-dot" style="background:var(--tq-naranja)"></span><b style="color:#fff;font-size:13px">Nivel 2 · Interno Taquión</b></div>
-      <p>Dataset nominal completo, incluye el Mapa de Voces. Requiere rol admin_taquion o AM-Estratega y un motivo registrado antes de generarse.</p>
-      <button class="btn" ${canNivel2?'':'disabled'}><svg class="icn-inline"><use href="#ico-lock"/></svg>Exportar dataset nominal</button></div>
+      <p>Dataset nominal completo, incluye el Mapa de Voces. Requiere rol admin_taquion o AM-Estratega y un motivo registrado — endpoint todavía no construido.</p>
+      <button class="btn" disabled><svg class="icn-inline"><use href="#ico-lock"/></svg>Exportar dataset nominal</button></div>
     <div class="export-card"><div class="head"><span class="export-dot" style="background:var(--tq-fucsia)"></span><b style="color:#fff;font-size:13px">Nivel 3 · Plataformas externas</b></div>
-      <p>No es un archivo: push directo. Custom Audience a Meta Ads (teléfono siempre hasheado) o sync a Google Sheets / Airtable.</p>
-      <button class="btn" ${canNivel3?'':'disabled'}><svg class="icn-inline"><use href="#ico-lock"/></svg>Push Custom Audience</button></div>
+      <p>Push directo a Meta Custom Audience o sync a Sheets/Airtable — no construido todavía.</p>
+      <button class="btn" disabled><svg class="icn-inline"><use href="#ico-lock"/></svg>Push Custom Audience</button></div>
   </div>
-  <div class="card"><h3>Audit log</h3><div class="sub">Toda exportación de Nivel 2 queda acá — quién, cuándo, motivo y filtro usado. Sin excepción, ni siquiera para admin_taquion.</div>
-  <div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Usuario</th><th>Nivel</th><th>Comunidad</th><th>Motivo</th></tr></thead><tbody>
-  <tr><td class="mono">17/09 · 14:02</td><td>admin_taquion</td><td><span class="pill state-enriquecido">Nivel 2</span></td><td>Un Metro Cuadrado</td><td>Cruce con encuesta de imagen — pedido de Insights</td></tr>
-  </tbody></table></div></div>`;
+  <div class="card"><h3>Audit log</h3><div class="sub" style="margin-bottom:0">Tabla <code>exportacion_log</code> ya existe en el esquema — el registro automático desde este botón todavía no está conectado (Nivel 1 no lo requiere; Nivel 2/3 sí, y no están construidos).</div></div>`;
 }
 
 /* ---------- render principal ---------- */
 function populateSidebar(){
   const selC = document.getElementById('selComunidad');
-  selC.innerHTML = Object.entries(COMUNIDADES).map(([id,c])=>`<option value="${id}">${c.nombre} (${c.cliente})</option>`).join('');
+  selC.innerHTML = [...state.comunidades.entries()]
+    .map(([id,c])=>`<option value="${id}">${c.nombre_interno} (${c.cliente||'—'})</option>`).join('');
   selC.value = state.comunidad;
-  selC.onchange = e=>{ state.comunidad = e.target.value; if(!COMUNIDADES[state.comunidad].enabled[state.activo]) state.activo='conocimiento'; renderAll(); };
-
+  selC.onchange = e=>{
+    state.comunidad = e.target.value;
+    const c = state.comunidades.get(state.comunidad);
+    if(!c.enabled[state.activo]) state.activo='conocimiento';
+    renderAll();
+  };
   document.getElementById('selRole').onchange = e=>{ state.role = e.target.value; renderAll(); };
 }
 
 function renderNav(){
-  const c = COMUNIDADES[state.comunidad];
+  const c = state.comunidades.get(state.comunidad);
   const nav = document.getElementById('navActivos');
   nav.innerHTML = ACTIVOS.map((a,i)=>{
-    const on = c.enabled[a];
+    const on = !!c.enabled[a];
     const active = state.activo===a && on;
     return `<button class="nav-item ${active?'active':''} ${on?'':'locked'}" data-a="${a}" ${on?'':'disabled'}>
       ${on?`<span class="nav-dot"></span>`:`<svg class="icn"><use href="#ico-lock"/></svg>`}
@@ -409,49 +499,54 @@ function renderRoleCaption(){
   badge.textContent = state.role;
   badge.className = 'role-badge ' + ({admin_taquion:'admin',am_estratega:'am',cliente:'cliente'}[state.role]);
   const texts = {
-    admin_taquion:'Ve todas las comunidades, el Mapa de Voces y los 3 niveles de exportación. Único rol implementado hoy (MVP) — los otros dos son una vista previa sin login real.',
-    am_estratega:'Backlog. Vería solo sus comunidades asignadas, el Mapa de Voces y exportación de nivel 1/2 — nunca nivel 3.',
-    cliente:'Backlog. Ve solo activos habilitados para su etapa, siempre agregado o pseudonimizado. Nunca ve el Mapa de Voces ni exportación nominal.',
+    admin_taquion:'Ve todas las comunidades, el Mapa de Voces y los 3 niveles de exportación. Único rol con login real hoy (MVP).',
+    am_estratega:'Backlog — sin login propio. Esta vista simula qué vería, sobre los mismos datos reales.',
+    cliente:'Backlog — sin login propio. Esta vista simula qué vería, sobre los mismos datos reales: nunca Mapa de Voces ni exportación nominal.',
   };
   cap.innerHTML = texts[state.role];
 }
 
-function renderAll(){
-  populateSidebar(); // keep selects in sync without losing focus issues (cheap for this mockup)
-  document.getElementById('selComunidad').value = state.comunidad;
+async function renderAll(){
+  if (!state.comunidad) return;
+  populateSidebar();
   document.getElementById('selRole').value = state.role;
   renderNav();
   renderRoleCaption();
 
-  const c = COMUNIDADES[state.comunidad];
+  const c = state.comunidades.get(state.comunidad);
   const content = document.getElementById('content');
   const title = document.getElementById('hTitle');
   const sub = document.getElementById('hSub');
 
   if(state.activo === '__export'){
     title.textContent = 'Exportación de datos';
-    sub.textContent = `${c.nombre} (${c.cliente}) · los 3 niveles de export y su gobernanza`;
-    content.innerHTML = renderExport(state.role);
+    sub.textContent = `${c.nombre_interno} (${c.cliente||'—'}) · los 3 niveles de export y su gobernanza`;
+    content.innerHTML = renderExport(state.role, state.comunidad, c.nombre_interno);
     return;
   }
 
   title.textContent = ACTIVO_LABEL[state.activo];
-  sub.textContent = `${c.nombre} (${c.cliente}) · ${ACTIVO_SUB[state.activo]}`;
+  sub.textContent = `${c.nombre_interno} (${c.cliente||'—'}) · ${ACTIVO_SUB[state.activo]}`;
 
   if(!c.enabled[state.activo]){
     const why = state.activo==='activaciones' ? 'Se habilita ante una campaña puntual de negocio.'
       : state.activo==='decisiones' ? 'Se escribe manualmente al cierre de la Temporada.'
-      : `Se habilita cuando la comunidad llega a la etapa correspondiente — hoy está en "${c.etapaLabel}".`;
+      : `Se habilita cuando la comunidad llega a la etapa correspondiente — hoy está en "${c.etapa}".`;
     content.innerHTML = lockedPanel(why);
     return;
   }
 
-  const d = CONTENT[state.comunidad][state.activo];
-  if(state.activo==='conocimiento') content.innerHTML = renderConocimiento(d);
-  else if(state.activo==='voz') content.innerHTML = renderVoz(d);
-  else if(state.activo==='crecimiento') content.innerHTML = renderCrecimiento(d);
-  else if(state.activo==='relacion') content.innerHTML = renderRelacion(d, state.role);
+  content.innerHTML = '<div class="card"><h3>Cargando…</h3></div>';
+  try {
+    if (state.activo === 'conocimiento') content.innerHTML = renderConocimiento(c);
+    else if (state.activo === 'voz') content.innerHTML = renderVoz(c);
+    else if (state.activo === 'crecimiento') content.innerHTML = renderCrecimiento(await loadFunnel(state.comunidad));
+    else if (state.activo === 'relacion') {
+      const [contactos, mapaVoces] = await Promise.all([loadContactos(state.comunidad), loadMapaVoces(state.comunidad)]);
+      content.innerHTML = renderRelacion(contactos, mapaVoces, state.role);
+    }
+  } catch (err) {
+    content.innerHTML = `<div class="card"><h3>Error consultando Supabase</h3><div class="sub" style="margin-bottom:0; color:var(--tq-naranja)">${err.message}</div></div>`;
+  }
 }
-
-renderAll();
 </script>
