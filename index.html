@@ -136,6 +136,12 @@ tbody tr:hover{background:var(--panel-raised)}
 .icn-inline{width:12px; height:12px; flex:none}
 .filters{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap}
 .filters select{background:var(--panel-raised); border:1px solid var(--border-strong); color:var(--text-body); font-size:12px; padding:7px 10px; border-radius:var(--r-in)}
+
+/* .login-screen/.app fijan su propio display, que le gana en la cascada al
+   [hidden] del navegador (misma especificidad, pero gana la hoja de autor) —
+   sin este !important, loginScreen/recoveryScreen/app quedan siempre visibles
+   apiladas una debajo de otra sin importar lo que togglee el JS. */
+[hidden]{ display:none !important; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
