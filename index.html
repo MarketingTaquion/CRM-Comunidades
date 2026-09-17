@@ -366,7 +366,7 @@ async function loadComunidades(){
   });
 
   if (!state.comunidad || !state.comunidades.has(state.comunidad)) {
-    const first = [...state.comunidades.values()].find(c => c.nombre_interno === 'Un Metro Cuadrado') || [...state.comunidades.values()][0];
+    const first = [...state.comunidades.values()][0];
     state.comunidad = first ? first.id : null;
   }
 }
@@ -469,6 +469,33 @@ function contactName(c, role){
 
 function renderConocimiento(c){ return notConnectedPanel('Conocimiento'); }
 function renderVoz(c){ return notConnectedPanel('Voz'); }
+
+function renderActivaciones(c){
+  const ejemplos = [
+    { fecha:'12 ago 2026', tipo:'Feria de barrio', descripcion:'Stand presencial en la feria de Chacarita, activación con el corredor Norte.', resultado:'34 contactos nuevos, 6 pasaron a "identificado" en la semana siguiente.' },
+    { fecha:'03 jul 2026', tipo:'Meetup con vecinos', descripcion:'Encuentro presencial con arquetipos C1/C4 sobre agenda de espacios públicos.', resultado:'12 asistentes, 2 candidatos a Mapa de Voces.' },
+    { fecha:'21 jun 2026', tipo:'Activación en WhatsApp', descripcion:'Campaña puntual invitando a completar la encuesta de intereses.', resultado:'58 respuestas, tasa de respuesta 41%.' },
+  ];
+  const rows = ejemplos.map(e => `<tr><td style="color:var(--text-faint); white-space:nowrap">${e.fecha}</td><td>${e.tipo}</td><td>${e.descripcion}</td><td>${e.resultado}</td></tr>`).join('');
+  return `<div class="card"><h3>Activaciones recientes</h3><div class="sub">Contenido de ejemplo — todavía no está conectado a <code>evento_journey</code> (tipo <code>'activacion'</code>). Se desbloqueó este activo para poder revisar el diseño de la vista antes de cablearlo a datos reales.</div>
+    <div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Resultado</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
+function renderDecisiones(c){
+  const ejemplos = [
+    { fecha:'30 ago 2026', decision:'Extender la Temporada 1 cuatro semanas más', motivo:'Alta retención en el corredor Norte y pedido explícito de la comunidad de sumar un encuentro presencial más antes del cierre.' },
+    { fecha:'15 jul 2026', decision:'Pausar la activación en WhatsApp para el arquetipo C3', motivo:'Tasa de respuesta por debajo del 10% en dos envíos consecutivos — se prioriza foco en C1/C4.' },
+    { fecha:'02 jun 2026', decision:'Incorporar el corredor Sur a la Temporada 2', motivo:'Demanda espontánea detectada en la encuesta de intereses (18% de las respuestas mencionan ese corredor).' },
+  ];
+  const rows = ejemplos.map(d => `<div style="margin-bottom:18px">
+      <div style="display:flex; gap:12px; align-items:baseline; margin-bottom:4px">
+        <span class="mono" style="color:var(--text-faint); font-size:11px; white-space:nowrap">${d.fecha}</span>
+        <b style="color:#fff; font-size:13px">${d.decision}</b>
+      </div>
+      <div class="sub" style="margin-bottom:0">${d.motivo}</div>
+    </div>`).join('');
+  return `<div class="card"><h3>Bitácora de decisiones</h3><div class="sub">Contenido de ejemplo — se escribe manualmente al cierre de cada Temporada (specs/006); todavía no hay una tabla propia en el esquema para persistir esto. Se desbloqueó este activo para revisar el diseño de la vista.</div>${rows}</div>`;
+}
 
 function renderCrecimiento(counts){
   const drops = {};
@@ -670,7 +697,7 @@ async function renderAll(){
     return;
   }
 
-  title.textContent = ACTIVO_LABEL[state.activo];
+  title.textContent = state.activo === 'conocimiento' ? 'Overview - Conocimiento' : ACTIVO_LABEL[state.activo];
   sub.textContent = `${c.nombre_interno} (${c.cliente||'—'}) · ${ACTIVO_SUB[state.activo]}`;
 
   if(!c.enabled[state.activo]){
@@ -690,6 +717,8 @@ async function renderAll(){
       const [contactos, mapaVoces] = await Promise.all([loadContactos(state.comunidad), loadMapaVoces(state.comunidad)]);
       content.innerHTML = renderRelacion(contactos, mapaVoces, state.role);
     }
+    else if (state.activo === 'activaciones') content.innerHTML = renderActivaciones(c);
+    else if (state.activo === 'decisiones') content.innerHTML = renderDecisiones(c);
   } catch (err) {
     content.innerHTML = `<div class="card"><h3>Error consultando Supabase</h3><div class="sub" style="margin-bottom:0; color:var(--tq-naranja)">${err.message}</div></div>`;
   }
