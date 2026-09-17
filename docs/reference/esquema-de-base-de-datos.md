@@ -80,6 +80,8 @@ Entidad central: un solo registro por persona, que avanza por `estado_identifica
 | `fuente_utm_source/medium/campaign` | text | |
 | `score_compuesto` | jsonb | Null hasta tener datos maduros |
 | `consentimiento_registrado` | boolean, default false | Ley 25.326 |
+| `referido_por_contacto_id` | uuid, FK → `contacto.id` | Quién trajo a este contacto. Null = no se cargó (no implica que no exista un referido) |
+| `fecha_baja` | timestamptz | Marca explícita de abandono. Null = activo. Se carga a mano, nunca se infiere (`db/002_overview_metricas.sql`) |
 | `fecha_alta`, `created_at`, `updated_at` | timestamptz | |
 
 Constraint: `(comunidad_id, telefono_hash)` único — el mismo teléfono en otra comunidad es una persona distinta a los fines de este CRM (comunidades aisladas entre sí).
@@ -144,6 +146,15 @@ Audit log obligatorio de toda exportación Nivel 2/3 (Nivel 1 no lo requiere).
 
 ### `export_nivel1_agregado`
 Base del export Nivel 1: agregado por `comunidad_id`, `corredor_localidad`, arquetipo/interés, `nivel_activacion` y `estado_identificacion`, con `cantidad_contactos`. Sin nombre/teléfono/username — estructuralmente no se puede "exportar de más" desde acá. `security_invoker = true`.
+
+### `overview_por_barrio`
+Definida en [`db/002_overview_metricas.sql`](../../db/002_overview_metricas.sql). Agregado por `comunidad_id` y `corredor_localidad` (coalescido a `'sin asignar'`), con `cantidad_contactos` y `nivel_activacion_promedio`. Excluye contactos con `fecha_baja` no nula. `security_invoker = true`. Base de la sección "Por barrio / corredor" de la pestaña Overview.
+
+### `overview_por_arquetipo`
+Mismo archivo. Agregado por `comunidad_id` y arquetipo (nombre, o `interes_declarado` si la comunidad no usa arquetipos, o `'sin arquetipo'`), con `cantidad_contactos` y `nivel_activacion_promedio`. Excluye contactos con `fecha_baja` no nula. `security_invoker = true`.
+
+### `comunidad_metricas`
+Una fila por comunidad con `total_contactos`, `contactos_activos`, `contactos_dados_de_baja`, `contactos_engaged`, `engagement_rate`, `tasa_referidos` y `tasa_abandono`. `engagement_rate` es real hoy (se apoya en `nivel_activacion`, ya poblado); `tasa_referidos` y `tasa_abandono` dependen de que se cargue `referido_por_contacto_id`/`fecha_baja` — devuelven `0` honestamente hasta que eso pase, nunca se infieren. Ver el porqué en [Modelo de identificación y gobernanza de exportación](../explanation/modelo-de-identificacion-y-gobernanza-de-exportacion.md#overview-y-métricas-de-performance). `security_invoker = true`.
 
 ## Funciones
 

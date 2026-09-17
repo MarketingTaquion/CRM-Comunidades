@@ -23,3 +23,13 @@ La razón de separar estos niveles en vez de un único export configurable es qu
 ## Por qué Conocimiento y Voz no muestran datos, aunque estén "habilitados"
 
 `renderConocimiento()` y `renderVoz()` devuelven un panel honesto ("todavía no tiene fuente de datos conectada") en vez de números. El esquema de `crm_comunidades` hoy no modela sentiment, piezas publicadas ni brecha semántica — construir esas tablas es una fase posterior, fuera del alcance actual. La alternativa de simular esos números con datos de ejemplo se descartó a propósito: es una regla cultural de Taquión no fabricar datos que parezcan reales sin serlo, y la señal de "esto no está conectado todavía" es más valiosa que un gráfico que parece funcionar pero no significa nada. Lo mismo aplica a CPME/CPMR/TRG/K-Factor en Crecimiento, que requieren una fuente de datos de inversión en pauta que todavía no existe en la base.
+
+## Overview y métricas de performance
+
+La pestaña Overview (`db/002_overview_metricas.sql`) aplica el mismo principio de no fabricar datos, pero de una forma más matizada que Conocimiento/Voz: en vez de mostrar un panel bloqueado, cada métrica se calcula de verdad y se muestra tal cual, incluso cuando ese valor real es `0%` por falta de carga.
+
+- **Engagement** es un número real desde el día uno: se calcula sobre `nivel_activacion`, un campo que ya está poblado para los contactos existentes. No requirió ningún cambio de esquema.
+- **Tasa de abandono** y **tasa de referidos** sí requirieron agregar columnas nuevas (`contacto.fecha_baja` y `contacto.referido_por_contacto_id`) porque el esquema no tenía ningún lugar donde registrar esa información. Ambas arrancan en `0%` para toda la base existente — deliberadamente no se marcó a nadie como "dado de baja" ni se infirió ningún referido a partir de, por ejemplo, patrones de `fuente_utm_source`. Son señales que requieren una decisión humana explícita (mismo criterio que `anonimizar_contacto()`: nunca automáticas), así que el `0%` de hoy es honesto — significa "nadie lo cargó todavía", no "no hay abandono ni referidos".
+- La UI (`renderOverview()` en `index.html`) muestra una nota aclaratoria cuando estas dos tasas dan `0`, para que no se lean como un logro ("cero abandono") cuando en realidad es "sin instrumentar todavía".
+
+La alternativa que se descartó fue inferir abandono automáticamente (por ejemplo, de `semanas_consecutivas_activo = 0` o de ausencia de eventos recientes en `evento_journey`). No se hizo porque el job semanal que mantiene `semanas_consecutivas_activo` actualizado todavía no existe (ver "Qué falta" en el README) — construir una métrica sobre un campo que hoy puede estar desactualizado sería, en los hechos, fabricar un número que parece confiable sin serlo.

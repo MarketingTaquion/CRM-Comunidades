@@ -189,6 +189,10 @@ tbody tr:hover{background:var(--panel-raised)}
     <div class="eyebrow">Comunidad activa</div>
     <select class="field" id="selComunidad"></select>
 
+    <div class="navlist" style="margin-bottom:22px">
+      <button class="sys-item" id="navOverview">Overview</button>
+    </div>
+
     <div class="eyebrow">Tablero — 6 activos</div>
     <div class="navlist" id="navActivos"></div>
 
@@ -248,7 +252,7 @@ const ESTADO_ORDEN = ['anonimo','pseudo_anonimo','semi_identificado','identifica
 const ESTADO_LABEL = {anonimo:'anónimo',pseudo_anonimo:'pseudo-anónimo',semi_identificado:'semi identificado',identificado:'identificado',enriquecido:'enriquecido',confirmado:'confirmado'};
 
 // state.comunidades: Map<id, {nombre_interno, cliente, etapa, enabled:{activo:bool}}>
-let state = { comunidad:null, activo:'conocimiento', role:'admin_taquion', comunidades:new Map() };
+let state = { comunidad:null, activo:'__overview', role:'admin_taquion', comunidades:new Map() };
 
 /* ---------- auth ---------- */
 const loginScreen = document.getElementById('loginScreen');
@@ -412,6 +416,29 @@ async function loadExportNivel1(comunidadId){
   return data || [];
 }
 
+async function loadOverviewBarrios(comunidadId){
+  const { data, error } = await supabase
+    .from('overview_por_barrio').select('*').eq('comunidad_id', comunidadId)
+    .order('cantidad_contactos', { ascending:false });
+  if (error) throw error;
+  return data || [];
+}
+
+async function loadOverviewArquetipos(comunidadId){
+  const { data, error } = await supabase
+    .from('overview_por_arquetipo').select('*').eq('comunidad_id', comunidadId)
+    .order('cantidad_contactos', { ascending:false });
+  if (error) throw error;
+  return data || [];
+}
+
+async function loadComunidadMetricas(comunidadId){
+  const { data, error } = await supabase
+    .from('comunidad_metricas').select('*').eq('comunidad_id', comunidadId).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 /* ---------- helpers de render ---------- */
 function kpiGrid(items){
   return '<div class="kpi-grid">' + items.map(([v,l,t])=>
@@ -527,6 +554,34 @@ function renderExport(role, comunidadId, comunidadNombre){
   <div class="card"><h3>Audit log</h3><div class="sub" style="margin-bottom:0">Tabla <code>exportacion_log</code> ya existe en el esquema — el registro automático desde este botón todavía no está conectado (Nivel 1 no lo requiere; Nivel 2/3 sí, y no están construidos).</div></div>`;
 }
 
+function renderOverview(metricas, barrios, arquetipos){
+  const total = metricas?.total_contactos ?? 0;
+  const pct = v => v==null ? '—' : (Math.round(v*1000)/10) + '%';
+
+  const kpis = kpiGrid([
+    [total.toLocaleString('es-AR'), 'Contactos totales', metricas?.contactos_dados_de_baja ? `${metricas.contactos_dados_de_baja} dados de baja` : 'Todos activos hoy'],
+    [pct(metricas?.engagement_rate), 'Engagement', 'Nivel de activación ≥ 3, sobre contactos activos'],
+    [pct(metricas?.tasa_abandono), 'Tasa de abandono', metricas?.contactos_dados_de_baja ? `${metricas.contactos_dados_de_baja} marcados como baja` : 'Sin bajas registradas todavía'],
+    [pct(metricas?.tasa_referidos), 'Tasa de referidos', 'Contactos con un referido cargado'],
+  ]);
+
+  const barRows = (rows, labelKey) => rows.length
+    ? rows.map(r => {
+        const p = total ? Math.min(Math.round(r.cantidad_contactos/total*1000)/10, 100) : 0;
+        return `<div class="bar-row"><span>${r[labelKey]}</span><div class="bar-track"><div class="bar-fill" style="width:${p}%"></div></div><span class="bar-val">${r.cantidad_contactos}</span></div>`;
+      }).join('')
+    : `<div class="sub" style="margin-bottom:0">Sin datos cargados todavía para esta comunidad.</div>`;
+
+  const necesitaNota = (metricas?.tasa_referidos === 0 || metricas?.tasa_abandono === 0);
+
+  return kpis +
+    `<div class="card"><h3>Por barrio / corredor</h3><div class="sub">Distribución real de <code>contacto.corredor_localidad</code> (vista <code>overview_por_barrio</code>).</div>${barRows(barrios, 'corredor_localidad')}</div>` +
+    `<div class="card"><h3>Por arquetipo</h3><div class="sub">Distribución real de arquetipo asignado, o interés declarado si la comunidad no usa arquetipos (vista <code>overview_por_arquetipo</code>).</div>${barRows(arquetipos, 'arquetipo')}</div>` +
+    (necesitaNota
+      ? `<div class="card"><h3>Sobre abandono y referidos</h3><div class="sub" style="margin-bottom:0">Estas dos métricas recién empiezan a trackearse (columnas <code>fecha_baja</code> y <code>referido_por_contacto_id</code> en <code>contacto</code>) — hoy reflejan lo que el equipo cargó, no se infieren ni se fabrican. Van a tener más sentido a medida que se registren hacia adelante. Engagement ya es un número real porque se apoya en <code>nivel_activacion</code>, que sí está poblado.</div></div>`
+      : '');
+}
+
 /* ---------- render principal ---------- */
 function populateSidebar(){
   const selC = document.getElementById('selComunidad');
@@ -536,7 +591,8 @@ function populateSidebar(){
   selC.onchange = e=>{
     state.comunidad = e.target.value;
     const c = state.comunidades.get(state.comunidad);
-    if(!c.enabled[state.activo]) state.activo='conocimiento';
+    const esVistaFija = state.activo === '__overview' || state.activo === '__export';
+    if(!esVistaFija && !c.enabled[state.activo]) state.activo='conocimiento';
     renderAll();
   };
   document.getElementById('selRole').onchange = e=>{ state.role = e.target.value; renderAll(); };
@@ -557,7 +613,12 @@ function renderNav(){
     if(btn.disabled) return;
     btn.onclick = ()=>{ state.activo = btn.dataset.a; renderAll(); };
   });
-  document.getElementById('navExport').onclick = ()=>{ state.activo = '__export'; renderAll(); };
+  const navOverview = document.getElementById('navOverview');
+  const navExport = document.getElementById('navExport');
+  navOverview.classList.toggle('active', state.activo === '__overview');
+  navExport.classList.toggle('active', state.activo === '__export');
+  navOverview.onclick = ()=>{ state.activo = '__overview'; renderAll(); };
+  navExport.onclick = ()=>{ state.activo = '__export'; renderAll(); };
 }
 
 function renderRoleCaption(){
@@ -584,6 +645,23 @@ async function renderAll(){
   const content = document.getElementById('content');
   const title = document.getElementById('hTitle');
   const sub = document.getElementById('hSub');
+
+  if(state.activo === '__overview'){
+    title.textContent = 'Overview';
+    sub.textContent = `${c.nombre_interno} (${c.cliente||'—'}) · barrio, arquetipos y métricas de performance`;
+    content.innerHTML = '<div class="card"><h3>Cargando…</h3></div>';
+    try {
+      const [metricas, barrios, arquetipos] = await Promise.all([
+        loadComunidadMetricas(state.comunidad),
+        loadOverviewBarrios(state.comunidad),
+        loadOverviewArquetipos(state.comunidad),
+      ]);
+      content.innerHTML = renderOverview(metricas, barrios, arquetipos);
+    } catch (err) {
+      content.innerHTML = `<div class="card"><h3>Error consultando Supabase</h3><div class="sub" style="margin-bottom:0; color:var(--tq-naranja)">${err.message}</div></div>`;
+    }
+    return;
+  }
 
   if(state.activo === '__export'){
     title.textContent = 'Exportación de datos';
