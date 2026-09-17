@@ -159,6 +159,22 @@ tbody tr:hover{background:var(--panel-raised)}
   </div>
 </div>
 
+<div class="login-screen" id="recoveryScreen" hidden>
+  <div class="login-card">
+    <div class="brand"><svg viewBox="0 0 20 20" style="color:var(--tq-fucsia)"><use href="#ico-comunidad"/></svg><b>Comunidades</b></div>
+    <div class="brand-sub" style="margin-left:0">Establecé tu contraseña</div>
+    <form id="recoveryForm">
+      <label for="recoveryPassword">Contraseña nueva</label>
+      <input type="password" id="recoveryPassword" autocomplete="new-password" minlength="8" required>
+      <label for="recoveryPassword2">Repetí la contraseña</label>
+      <input type="password" id="recoveryPassword2" autocomplete="new-password" minlength="8" required>
+      <button type="submit" class="btn btn-fill" style="width:100%; justify-content:center; margin-top:20px">Guardar contraseña</button>
+    </form>
+    <div class="login-error" id="recoveryError"></div>
+    <div class="login-note">El link del mail te autentica, pero la contraseña recién queda guardada cuando la confirmás en este paso.</div>
+  </div>
+</div>
+
 <div class="app" id="app" hidden>
   <aside class="sidebar">
     <div class="brand"><svg viewBox="0 0 20 20" style="color:var(--tq-fucsia)"><use href="#ico-comunidad"/></svg><b>Comunidades</b></div>
@@ -230,11 +246,30 @@ let state = { comunidad:null, activo:'conocimiento', role:'admin_taquion', comun
 
 /* ---------- auth ---------- */
 const loginScreen = document.getElementById('loginScreen');
+const recoveryScreen = document.getElementById('recoveryScreen');
 const appEl = document.getElementById('app');
 const loginForm = document.getElementById('loginForm');
 const loginError = document.getElementById('loginError');
+const recoveryForm = document.getElementById('recoveryForm');
+const recoveryError = document.getElementById('recoveryError');
 
 function showLoginError(msg){ loginError.textContent = msg; }
+function showRecoveryError(msg){ recoveryError.textContent = msg; }
+
+// El link de "Send password recovery" de Supabase autentica al usuario de entrada
+// (deja un access_token en el hash de la URL, type=recovery) pero NO alcanza para
+// tener una contraseña nueva: eso requiere un paso explícito de updateUser(). Sin
+// esta bandera, la app trataba esa sesión como un login normal y entraba directo
+// al panel sin que la contraseña quedara guardada — de ahí el "incorrectos" al
+// intentar loguearse de nuevo más tarde con la password que la persona creía haber puesto.
+let recoveryMode = window.location.hash.includes('type=recovery');
+
+function showRecoveryScreen(){
+  loginScreen.hidden = true; appEl.hidden = true; recoveryScreen.hidden = false;
+}
+function showLoginScreen(){
+  appEl.hidden = true; recoveryScreen.hidden = true; loginScreen.hidden = false;
+}
 
 if (!supabase) {
   showLoginError('Config no disponible — falta SUPABASE_URL/SUPABASE_ANON_KEY (variables de entorno de Netlify). El sitio se deployó sin ellas, ver README.md.');
@@ -249,22 +284,42 @@ if (!supabase) {
     if (error) showLoginError(error.message === 'Invalid login credentials' ? 'Email o contraseña incorrectos.' : error.message);
   });
 
+  recoveryForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    showRecoveryError('');
+    const p1 = document.getElementById('recoveryPassword').value;
+    const p2 = document.getElementById('recoveryPassword2').value;
+    if (p1.length < 8) return showRecoveryError('La contraseña debe tener al menos 8 caracteres.');
+    if (p1 !== p2) return showRecoveryError('Las dos contraseñas no coinciden.');
+    const btn = recoveryForm.querySelector('button');
+    btn.disabled = true; btn.textContent = 'Guardando…';
+    const { error } = await supabase.auth.updateUser({ password: p1 });
+    btn.disabled = false; btn.textContent = 'Guardar contraseña';
+    if (error) return showRecoveryError(error.message);
+    recoveryMode = false;
+    history.replaceState(null, '', window.location.pathname);
+    const { data } = await supabase.auth.getSession();
+    if (data.session) enterApp(data.session); else showLoginScreen();
+  });
+
   document.getElementById('btnLogout').addEventListener('click', async () => {
     await supabase.auth.signOut();
   });
 
-  supabase.auth.onAuthStateChange((_event, session) => {
-    if (session) enterApp(session);
-    else { appEl.hidden = true; loginScreen.hidden = false; }
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') { recoveryMode = true; showRecoveryScreen(); return; }
+    if (session) { if (recoveryMode) showRecoveryScreen(); else enterApp(session); }
+    else if (!recoveryMode) showLoginScreen();
   });
 
   supabase.auth.getSession().then(({ data }) => {
-    if (data.session) enterApp(data.session);
+    if (data.session) { if (recoveryMode) showRecoveryScreen(); else enterApp(data.session); }
   });
 }
 
 async function enterApp(session){
   loginScreen.hidden = true;
+  recoveryScreen.hidden = true;
   appEl.hidden = false;
   document.getElementById('sessionEmail').textContent = session.user.email;
   await loadComunidades();
