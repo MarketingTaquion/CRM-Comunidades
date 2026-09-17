@@ -271,6 +271,12 @@ function showLoginScreen(){
   appEl.hidden = true; recoveryScreen.hidden = true; loginScreen.hidden = false;
 }
 
+// Mostrar la pantalla de recuperación apenas se detecta el hash, sin esperar a
+// que Supabase dispare el evento PASSWORD_RECOVERY: si el token ya venció, ya
+// se consumió, o el evento tarda/no llega, antes se caía de nuevo al login sin
+// ninguna explicación. Así, aunque falle, el error queda visible en esta pantalla.
+if (recoveryMode) showRecoveryScreen();
+
 if (!supabase) {
   showLoginError('Config no disponible — falta SUPABASE_URL/SUPABASE_ANON_KEY (variables de entorno de Netlify). El sitio se deployó sin ellas, ver README.md.');
   loginForm.querySelector('button').disabled = true;
