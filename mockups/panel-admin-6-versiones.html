@@ -1,0 +1,589 @@
+<title>CRM de Comunidades</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&display=swap">
+<style>
+/* ============ Taquion 2026 Design System — tokens (subset aplicado a UI oscura) ============ */
+:root{
+  --tq-negro:#000000; --tq-blanco:#FFFFFF;
+  --tq-gris-050:#F5F5F6; --tq-gris-100:#EBEBED; --tq-gris-200:#D4D4D7;
+  --tq-gris-400:#999999; --tq-gris-600:#666666; --tq-gris-800:#3D3D3D; --tq-gris-900:#2D2D2D;
+  --tq-fucsia:#FF00B8; --tq-naranja:#FFA900; --tq-azul:#3D5CFF;
+  --tq-gradiente-comunidad:linear-gradient(135deg,#FF00A8 0%,#FF9F00 100%);
+  --tq-line-inverse:rgba(255,255,255,.24);
+
+  /* superficies operativas oscuras — mismo tratamiento que Pulso Ignite (negro puro + panel elevado) */
+  --bg:#000000;
+  --panel:#141414;
+  --panel-raised:#1C1C1C;
+  --panel-sunken:#0A0A0A;
+  --border:rgba(255,255,255,.10);
+  --border-strong:var(--tq-line-inverse);
+
+  --text-strong:var(--tq-blanco);
+  --text-body:var(--tq-gris-200);
+  --text-muted:var(--tq-gris-400);
+  --text-faint:var(--tq-gris-600);
+
+  --font:"Archivo","Archivo Fallback",system-ui,sans-serif;
+  --radius-input:4px; --radius-card:8px; --radius-full:999px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text-body); font-family:var(--font);
+  -webkit-font-smoothing:antialiased; font-variant-numeric:tabular-nums;
+}
+h1,h2,h3,h4{color:var(--text-strong); margin:0; font-weight:900; letter-spacing:-.01em; text-wrap:balance}
+p{margin:0}
+button{font-family:inherit}
+a{color:var(--tq-azul)}
+::selection{background:var(--tq-fucsia);color:#fff}
+
+/* ============ Chrome del comparador de mockups (no es parte del producto) ============ */
+.lab-bar{
+  position:sticky; top:0; z-index:50; background:var(--panel-sunken);
+  border-bottom:1px solid var(--border); padding:14px 20px;
+  display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+}
+.lab-id{display:flex; align-items:baseline; gap:8px; white-space:nowrap}
+.lab-id b{font-weight:900; font-size:15px; color:var(--text-strong)}
+.lab-id span{font-size:12px; color:var(--text-faint)}
+.lab-tabs{display:flex; gap:6px; flex-wrap:wrap}
+.lab-tab{
+  border:1px solid var(--border); background:transparent; color:var(--text-muted);
+  padding:7px 12px; border-radius:var(--radius-full); font-size:12px; font-weight:600;
+  cursor:pointer; letter-spacing:.01em; transition:border-color .15s, color .15s, background .15s;
+}
+.lab-tab:hover{color:var(--text-strong); border-color:var(--border-strong)}
+.lab-tab.active{background:var(--text-strong); color:#000; border-color:var(--text-strong)}
+.lab-caption{
+  padding:10px 20px 16px; font-size:13px; color:var(--text-muted); max-width:980px;
+  border-bottom:1px solid var(--border); background:var(--panel-sunken);
+}
+.lab-caption b{color:var(--text-body); font-weight:600}
+
+.screen{padding:28px 28px 64px}
+.screen[hidden]{display:none}
+
+/* ============ Componentes compartidos del producto ============ */
+.eyebrow{
+  font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.09em;
+  color:var(--text-faint);
+}
+.arrow{color:var(--tq-fucsia)}
+
+.btn{
+  display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius-input);
+  border:1px solid var(--border-strong); background:transparent; color:var(--text-strong);
+  padding:9px 14px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;
+}
+.btn:hover{background:var(--panel-raised)}
+.btn-primary{background:var(--text-strong); color:#000; border-color:var(--text-strong)}
+.btn-primary:hover{background:var(--tq-gris-200)}
+.btn-fucsia{border-color:var(--tq-fucsia); color:var(--tq-fucsia)}
+.btn-fucsia:hover{background:rgba(255,0,184,.1)}
+.btn-sm{padding:6px 10px; font-size:12px}
+
+.pill{
+  display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:var(--radius-full);
+  font-size:11px; font-weight:700; letter-spacing:.02em; white-space:nowrap; border:1px solid transparent;
+}
+.pill-nominal{color:var(--tq-fucsia); border-color:rgba(255,0,184,.4); background:rgba(255,0,184,.08)}
+.pill-anon{color:var(--text-muted); border-color:var(--border-strong); background:rgba(255,255,255,.03)}
+.pill-ok{color:#fff; border-color:var(--border-strong); background:rgba(255,255,255,.06)}
+.pill-warn{color:var(--tq-naranja); border-color:rgba(255,169,0,.4); background:rgba(255,169,0,.08)}
+
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block;flex:none}
+.dot-on{background:var(--tq-fucsia)}
+.dot-off{background:var(--tq-gris-800)}
+
+.card{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-card); padding:20px}
+
+.icon-sm{width:11px;height:11px;flex:none; margin-right:1px}
+
+table{border-collapse:collapse; width:100%}
+th{
+  text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--text-faint); padding:0 14px 10px; border-bottom:1px solid var(--border);
+}
+td{padding:12px 14px; font-size:13px; color:var(--text-body); border-bottom:1px solid var(--border); vertical-align:middle}
+tbody tr:hover{background:var(--panel-raised)}
+.mono{font-variant-numeric:tabular-nums; color:var(--text-muted)}
+.tbl-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius-card)}
+.tbl-wrap table{min-width:760px}
+
+.kpi{display:flex; flex-direction:column; gap:6px; padding:16px 18px; background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-card)}
+.kpi .v{font-size:28px; font-weight:900; color:var(--text-strong); line-height:1}
+.kpi .l{font-size:12px; color:var(--text-muted)}
+.kpi .t{font-size:11px; color:var(--text-faint)}
+
+.stage-track{display:flex; align-items:center; gap:0}
+.stage-step{display:flex; align-items:center; gap:8px}
+.stage-node{width:9px;height:9px;border-radius:50%; border:1.5px solid var(--text-faint); background:var(--bg); flex:none}
+.stage-node.done{background:var(--tq-fucsia); border-color:var(--tq-fucsia)}
+.stage-node.now{background:var(--bg); border-color:var(--tq-fucsia); box-shadow:0 0 0 3px rgba(255,0,184,.18)}
+.stage-label{font-size:12px; color:var(--text-faint); white-space:nowrap}
+.stage-label.now{color:var(--tq-fucsia); font-weight:700}
+.stage-line{width:34px; height:1px; background:var(--border-strong); margin:0 6px}
+.stage-line.done{background:var(--tq-fucsia)}
+
+.activo-tab{
+  display:flex; align-items:center; gap:7px; padding:11px 14px; font-size:13px; font-weight:600;
+  color:var(--text-muted); border-bottom:2px solid transparent; cursor:default; white-space:nowrap;
+}
+.activo-tab.active{color:var(--text-strong); border-bottom-color:var(--tq-fucsia)}
+.activo-tab.off{color:var(--text-faint)}
+
+svg{display:block}
+</style>
+
+<!-- ============================================================ -->
+<!-- Barra del laboratorio de mockups (chrome de comparación, no es UI del producto) -->
+<!-- ============================================================ -->
+<div class="lab-bar">
+  <div class="lab-id"><b>CRM de Comunidades ↘</b><span>panel admin · 6 direcciones para elegir antes del esquema de datos</span></div>
+  <div class="lab-tabs" id="tabs"></div>
+</div>
+<div class="lab-caption" id="caption"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ico-lock" viewBox="0 0 16 16">
+    <rect x="3.25" y="7.25" width="9.5" height="6.75" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    <path d="M5.5 7.25V5.4a2.5 2.5 0 0 1 5 0v1.85" fill="none" stroke="currentColor" stroke-width="1.4"/>
+  </symbol>
+  <symbol id="ico-check" viewBox="0 0 16 16">
+    <path d="M3.5 8.5l3 3 6-6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="ico-warn" viewBox="0 0 16 16">
+    <path d="M8 2.5l6.2 10.8H1.8L8 2.5z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M8 6.6v3.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+    <circle cx="8" cy="11.6" r=".85" fill="currentColor" stroke="none"/>
+  </symbol>
+</svg>
+
+<main>
+<!-- ============================================================ -->
+<!-- V1 — CONSOLA OPERATIVA: sidebar de comunidades + tabla densa  -->
+<!-- ============================================================ -->
+<section class="screen" id="s1" style="padding:0">
+  <div style="display:grid; grid-template-columns:248px 1fr; min-height:640px">
+    <!-- sidebar -->
+    <aside style="background:var(--panel-sunken); border-right:1px solid var(--border); padding:20px 16px">
+      <div class="eyebrow" style="margin-bottom:14px">Comunidades <span class="arrow">↘</span></div>
+      <div style="display:flex; flex-direction:column; gap:4px">
+        <div style="padding:12px 12px; border-radius:var(--radius-input); background:var(--panel-raised); border:1px solid var(--border-strong)">
+          <div style="display:flex; justify-content:space-between; align-items:center"><b style="color:#fff;font-size:13px">Todo un País</b><span class="mono" style="font-size:11px">1.842</span></div>
+          <div style="font-size:11px; color:var(--text-faint); margin-top:3px">San Luis · Etapa Activar</div>
+        </div>
+        <div style="padding:12px 12px; border-radius:var(--radius-input)">
+          <div style="display:flex; justify-content:space-between; align-items:center"><span style="font-size:13px; color:var(--text-body)">Cortado en Jarrito</span><span class="mono" style="font-size:11px">612</span></div>
+          <div style="font-size:11px; color:var(--text-faint); margin-top:3px">CABA · Etapa Diseñar</div>
+        </div>
+      </div>
+      <div style="margin-top:28px" class="eyebrow">Acceso interno</div>
+      <div style="margin-top:10px; display:flex; flex-direction:column; gap:2px">
+        <a href="#" style="font-size:13px; color:var(--tq-fucsia); text-decoration:none; padding:7px 12px; border-radius:var(--radius-input); background:rgba(255,0,184,.08)">Mapa de Voces</a>
+        <a href="#" style="font-size:13px; color:var(--text-muted); text-decoration:none; padding:7px 12px">Configurar etapas</a>
+        <a href="#" style="font-size:13px; color:var(--text-muted); text-decoration:none; padding:7px 12px">Integración ManyChat</a>
+      </div>
+    </aside>
+
+    <!-- main -->
+    <div style="padding:24px 28px">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap">
+        <div>
+          <h2 style="font-size:22px">Todo un País</h2>
+          <div style="font-size:13px; color:var(--text-muted); margin-top:4px">San Luis Capital · Quines · La Toma — Temporada 1, Etapa <b style="color:var(--tq-fucsia)">Activar</b></div>
+        </div>
+        <div style="display:flex; gap:8px">
+          <button class="btn btn-sm">Importar datos</button>
+          <button class="btn btn-primary btn-sm">Exportar ▾</button>
+        </div>
+      </div>
+
+      <!-- tabs de activos -->
+      <div style="display:flex; border-bottom:1px solid var(--border); margin-top:22px; gap:4px">
+        <div class="activo-tab">Conocimiento</div>
+        <div class="activo-tab">Voz</div>
+        <div class="activo-tab active">Crecimiento</div>
+        <div class="activo-tab">Relación</div>
+        <div class="activo-tab off"><svg class="icon-sm"><use href="#ico-lock"/></svg>Activaciones</div>
+        <div class="activo-tab off"><svg class="icon-sm"><use href="#ico-lock"/></svg>Decisiones</div>
+      </div>
+
+      <!-- KPIs del activo -->
+      <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-top:20px">
+        <div class="kpi"><div class="v">$2.150</div><div class="l">CPME</div><div class="t">objetivo &lt; $2.500</div></div>
+        <div class="kpi"><div class="v">$1.890</div><div class="l">CPMR</div><div class="t">objetivo &lt; $2.100</div></div>
+        <div class="kpi"><div class="v">58%</div><div class="l">Conv. de triaje</div><div class="t">objetivo &gt; 50%</div></div>
+        <div class="kpi"><div class="v">64%</div><div class="l">TRG a 30 días</div><div class="t">retención de grupo</div></div>
+        <div class="kpi"><div class="v">1.21</div><div class="l">K-Factor</div><div class="t">crecimiento por referido</div></div>
+      </div>
+
+      <!-- toolbar de miembros -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:26px; flex-wrap:wrap; gap:10px">
+        <h3 style="font-size:15px; font-weight:700; color:var(--text-strong)">Miembros · 1.842</h3>
+        <div style="display:flex; gap:6px">
+          <button class="btn btn-sm" style="background:var(--panel-raised)">Todos</button>
+          <button class="btn btn-sm btn-fucsia">Nominalizados · 1.240</button>
+          <button class="btn btn-sm">No-nominalizados · 602</button>
+        </div>
+      </div>
+
+      <div class="tbl-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>Miembro</th><th>Localidad</th><th>Interés</th><th>Nivel</th><th>Fuente</th><th>Alta</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td>#A-0182 <span class="mono">·•••7261</span></td><td>San Luis Capital</td><td>Seguridad</td><td class="mono">4/5</td><td>IG Reels Capital</td><td class="mono">12/08</td><td><span class="pill pill-nominal">● Nominal</span></td></tr>
+            <tr><td>#A-0183 <span class="mono">·•••4410</span></td><td>Quines</td><td>Espacios públicos</td><td class="mono">2/5</td><td>WA_Click Quines</td><td class="mono">14/08</td><td><span class="pill pill-anon">Anónimo</span></td></tr>
+            <tr><td>#A-0201 <span class="mono">·•••9902</span></td><td>La Toma</td><td>Movilidad</td><td class="mono">3/5</td><td>WA_Click La Toma</td><td class="mono">15/08</td><td><span class="pill pill-nominal">● Nominal</span></td></tr>
+            <tr><td>#A-0233 <span class="mono">·•••1187</span></td><td>San Luis Capital</td><td>Basura</td><td class="mono">1/5</td><td>Lookalike Capital</td><td class="mono">20/08</td><td><span class="pill pill-anon">Anónimo</span></td></tr>
+            <tr><td>#A-0250 <span class="mono">·•••5523</span></td><td>Quines</td><td>Seguridad</td><td class="mono">5/5</td><td>Referido interno</td><td class="mono">22/08</td><td><span class="pill pill-nominal">● Nominal</span></td></tr>
+            <tr><td>#A-0271 <span class="mono">·•••3390</span></td><td>La Toma</td><td>Otro</td><td class="mono">2/5</td><td>IG Reels La Toma</td><td class="mono">24/08</td><td><span class="pill pill-anon">Anónimo</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- V2 — MAPA DE ISLAS: overview visual + activos como 2x3 tiles  -->
+<!-- ============================================================ -->
+<section class="screen" id="s2" hidden>
+  <div class="eyebrow">Panel admin <span class="arrow">↘</span> todas las comunidades</div>
+  <h2 style="font-size:26px; margin-top:8px">Islas activas</h2>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:22px">
+    <div class="card" style="border-color:var(--tq-fucsia); position:relative; overflow:hidden">
+      <div style="position:absolute; inset:0; background:var(--tq-gradiente-comunidad); opacity:.10"></div>
+      <div style="position:relative">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start">
+          <div><div class="eyebrow" style="color:var(--tq-fucsia)">San Luis</div><h3 style="font-size:20px; margin-top:4px">Todo un País</h3></div>
+          <span class="pill pill-nominal">Etapa Activar</span>
+        </div>
+        <div style="display:flex; align-items:baseline; gap:8px; margin-top:18px">
+          <span style="font-size:34px; font-weight:900; color:#fff">1.842</span>
+          <span style="font-size:13px; color:var(--text-muted)">/ 5.000 North Star</span>
+        </div>
+        <div style="height:5px; background:var(--panel-raised); border-radius:99px; margin-top:8px; overflow:hidden"><div style="height:100%; width:37%; background:var(--tq-gradiente-comunidad)"></div></div>
+        <div class="stage-track" style="margin-top:18px">
+          <div class="stage-step"><div class="stage-node done"></div></div><div class="stage-line done"></div>
+          <div class="stage-step"><div class="stage-node done"></div></div><div class="stage-line done"></div>
+          <div class="stage-step"><div class="stage-node done"></div></div><div class="stage-line done"></div>
+          <div class="stage-step"><div class="stage-node now"></div><span class="stage-label now">Activar</span></div><div class="stage-line"></div>
+          <div class="stage-step"><div class="stage-node"></div><span class="stage-label">Crecer</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start">
+        <div><div class="eyebrow">GCBA</div><h3 style="font-size:20px; margin-top:4px">Cortado en Jarrito</h3></div>
+        <span class="pill pill-ok">Etapa Diseñar</span>
+      </div>
+      <div style="display:flex; align-items:baseline; gap:8px; margin-top:18px">
+        <span style="font-size:34px; font-weight:900; color:#fff">612</span>
+        <span style="font-size:13px; color:var(--text-muted)">/ 15.000 North Star</span>
+      </div>
+      <div style="height:5px; background:var(--panel-raised); border-radius:99px; margin-top:8px; overflow:hidden"><div style="height:100%; width:4%; background:var(--text-faint)"></div></div>
+      <div class="stage-track" style="margin-top:18px">
+        <div class="stage-step"><div class="stage-node done"></div></div><div class="stage-line done"></div>
+        <div class="stage-step"><div class="stage-node done"></div></div><div class="stage-line done"></div>
+        <div class="stage-step"><div class="stage-node now"></div><span class="stage-label now">Diseñar</span></div><div class="stage-line"></div>
+        <div class="stage-step"><div class="stage-node"></div><span class="stage-label">Activar</span></div><div class="stage-line"></div>
+        <div class="stage-step"><div class="stage-node"></div><span class="stage-label">Crecer</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- expandido: Todo un País -->
+  <div style="margin-top:34px">
+    <div style="display:flex; justify-content:space-between; align-items:center">
+      <h3 style="font-size:16px; color:var(--text-strong)">Todo un País — los 6 activos</h3>
+      <div style="display:flex; gap:8px"><button class="btn btn-sm">Importar</button><button class="btn btn-primary btn-sm">Exportar</button></div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:14px">
+      <div class="card"><div style="display:flex;justify-content:space-between"><b style="color:#fff;font-size:14px">Conocimiento</b><span class="pill pill-ok">✓ Activo</span></div><p style="font-size:12px;color:var(--text-muted);margin-top:8px">Recibe: corte mensual de conversación + arquetipación inicial.</p></div>
+      <div class="card"><div style="display:flex;justify-content:space-between"><b style="color:#fff;font-size:14px">Voz</b><span class="pill pill-ok">✓ Activo</span></div><p style="font-size:12px;color:var(--text-muted);margin-top:8px">Recibe: plan editorial y rendimiento por canal.</p></div>
+      <div class="card"><div style="display:flex;justify-content:space-between"><b style="color:#fff;font-size:14px">Crecimiento</b><span class="pill pill-ok">✓ Activo</span></div><p style="font-size:12px;color:var(--text-muted);margin-top:8px">Recibe: CPME, CPMR, TRG, K-Factor.</p></div>
+      <div class="card"><div style="display:flex;justify-content:space-between"><b style="color:#fff;font-size:14px">Relación</b><span class="pill pill-ok">✓ Activo</span></div><p style="font-size:12px;color:var(--text-muted);margin-top:8px">Recibe: miembros con nombre y estado de vínculo por grupo.</p></div>
+      <div class="card" style="opacity:.45"><div style="display:flex;justify-content:space-between"><b style="color:#fff;font-size:14px">Activaciones</b><span class="pill pill-anon"><svg class="icon-sm"><use href="#ico-lock"/></svg>Sin campaña</span></div><p style="font-size:12px;color:var(--text-muted);margin-top:8px">Se habilita ante una campaña puntual de negocio.</p></div>
+      <div class="card" style="opacity:.45"><div style="display:flex;justify-content:space-between"><b style="color:#fff;font-size:14px">Decisiones</b><span class="pill pill-anon"><svg class="icon-sm"><use href="#ico-lock"/></svg>Cierre pendiente</span></div><p style="font-size:12px;color:var(--text-muted);margin-top:8px">Se escribe al cierre de la Temporada 1.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- V3 — TORRE DE CONTROL: KPI cruzado + comparación de clientes  -->
+<!-- ============================================================ -->
+<section class="screen" id="s3" hidden>
+  <div class="eyebrow">Vista agregada <span class="arrow">↘</span> todas las comunidades</div>
+  <h2 style="font-size:26px; margin-top:8px">Torre de control</h2>
+
+  <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-top:22px">
+    <div class="kpi"><div class="v">2</div><div class="l">Comunidades activas</div><div class="t">Todo un País · Cortado en Jarrito</div></div>
+    <div class="kpi"><div class="v">2.454</div><div class="l">Miembros totales</div><div class="t">suma de ambas comunidades</div></div>
+    <div class="kpi">
+      <div class="l">Nominal / No-nominal</div>
+      <div style="display:flex; height:9px; border-radius:99px; overflow:hidden; margin-top:4px">
+        <div style="width:64%; background:var(--tq-fucsia)"></div><div style="width:36%; background:var(--tq-gris-800)"></div>
+      </div>
+      <div class="t">1.580 nominal · 874 anónimo</div>
+    </div>
+    <div class="kpi"><div class="v">$2.150</div><div class="l">CPME promedio</div><div class="t">solo comunidades con Crecimiento activo</div></div>
+    <div class="kpi" style="border-color:rgba(255,169,0,.4)"><div class="v" style="color:var(--tq-naranja)">1</div><div class="l">Alertas de pacing</div><div class="t">drop-off de bot &gt; 30%</div></div>
+  </div>
+
+  <div class="tbl-wrap" style="margin-top:26px">
+    <table>
+      <thead><tr><th>Comunidad</th><th>Etapa</th><th>Activos habilitados</th><th>Miembros</th><th>% Nominal</th><th>CPME</th><th>Alerta</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b style="color:#fff">Todo un País</b><div style="font-size:11px;color:var(--text-faint)">San Luis</div></td>
+          <td><span class="pill pill-nominal">Activar</span></td>
+          <td><span style="display:inline-flex;gap:3px">
+            <span class="dot dot-on"></span><span class="dot dot-on"></span><span class="dot dot-on"></span><span class="dot dot-on"></span><span class="dot dot-off"></span><span class="dot dot-off"></span>
+          </span> <span class="mono" style="font-size:11px">4/6</span></td>
+          <td class="mono">1.842</td>
+          <td class="mono">67%</td>
+          <td class="mono">$2.150</td>
+          <td><span class="pill pill-warn"><svg class="icon-sm"><use href="#ico-warn"/></svg>Drop-off 34%</span></td>
+        </tr>
+        <tr>
+          <td><b style="color:#fff">Cortado en Jarrito</b><div style="font-size:11px;color:var(--text-faint)">CABA · GCBA</div></td>
+          <td><span class="pill pill-ok">Diseñar</span></td>
+          <td><span style="display:inline-flex;gap:3px">
+            <span class="dot dot-on"></span><span class="dot dot-on"></span><span class="dot dot-off"></span><span class="dot dot-off"></span><span class="dot dot-off"></span><span class="dot dot-off"></span>
+          </span> <span class="mono" style="font-size:11px">2/6</span></td>
+          <td class="mono">612</td>
+          <td class="mono">56%</td>
+          <td class="mono">—</td>
+          <td><span class="pill pill-ok">Sin alertas</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:12px; color:var(--text-faint); margin-top:10px">Esta es la única vista donde un admin ve ambas comunidades una al lado de la otra — pensada para chequeo semanal, no para operar el día a día de una comunidad puntual.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- V4 — LÍNEA DE TEMPORADA: etapa arriba, activos en acordeón    -->
+<!-- ============================================================ -->
+<section class="screen" id="s4" hidden>
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px">
+    <div><div class="eyebrow">Cortado en Jarrito <span class="arrow">↘</span> GCBA</div><h2 style="font-size:24px; margin-top:6px">Temporada 1</h2></div>
+    <div style="display:flex; gap:8px"><button class="btn btn-sm">Importar</button><button class="btn btn-primary btn-sm">Exportar</button></div>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <div style="display:flex; justify-content:space-between; align-items:center">
+      <div class="stage-track">
+        <div class="stage-step"><div class="stage-node done"></div><span class="stage-label">Detectar</span></div><div class="stage-line done"></div>
+        <div class="stage-step"><div class="stage-node done"></div><span class="stage-label">Entender</span></div><div class="stage-line done"></div>
+        <div class="stage-step"><div class="stage-node now"></div><span class="stage-label now">Diseñar</span></div><div class="stage-line"></div>
+        <div class="stage-step"><div class="stage-node"></div><span class="stage-label">Activar</span></div><div class="stage-line"></div>
+        <div class="stage-step"><div class="stage-node"></div><span class="stage-label">Crecer</span></div>
+      </div>
+      <span style="font-size:12px; color:var(--text-faint)">Estrategia de Destino — vence en 11 días</span>
+    </div>
+  </div>
+
+  <div style="margin-top:18px; display:flex; flex-direction:column; gap:8px">
+    <!-- Conocimiento — expandido -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center">
+        <b style="color:#fff; font-size:14px">01 · Conocimiento</b><span class="pill pill-ok">✓ Activo</span>
+      </div>
+      <p style="font-size:13px; color:var(--text-body); margin-top:12px">Recibe: datos cuanti/cuali, desk research, corte mensual de conversación en redes y diseño de arquetipación al comienzo.</p>
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px">
+        <div class="kpi" style="padding:12px 14px"><div class="v" style="font-size:20px">4</div><div class="l">Arquetipos definidos</div></div>
+        <div class="kpi" style="padding:12px 14px"><div class="v" style="font-size:20px">C4</div><div class="l">Prioridad #1 — Felipe</div></div>
+        <div class="kpi" style="padding:12px 14px"><div class="v" style="font-size:20px">C6</div><div class="l">Prioridad #2 — Martina</div></div>
+        <div class="kpi" style="padding:12px 14px"><div class="v" style="font-size:20px">2</div><div class="l">Excluidos por riesgo</div></div>
+      </div>
+    </div>
+    <!-- Voz — expandido -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center">
+        <b style="color:#fff; font-size:14px">02 · Voz</b><span class="pill pill-ok">✓ Activo</span>
+      </div>
+      <p style="font-size:13px; color:var(--text-body); margin-top:12px">Recibe: plan editorial mensual, despiece por canal, rendimiento de pieza y crecimiento de audiencia mes a mes.</p>
+    </div>
+    <!-- Crecimiento — colapsado, deshabilitado -->
+    <div class="card" style="opacity:.5">
+      <div style="display:flex; justify-content:space-between; align-items:center">
+        <span style="font-size:14px; color:var(--text-muted)">03 · Crecimiento</span><span class="pill pill-anon"><svg class="icon-sm"><use href="#ico-lock"/></svg>Se habilita en Activar</span>
+      </div>
+    </div>
+    <div class="card" style="opacity:.5"><div style="display:flex; justify-content:space-between; align-items:center"><span style="font-size:14px; color:var(--text-muted)">04 · Relación</span><span class="pill pill-anon"><svg class="icon-sm"><use href="#ico-lock"/></svg>Se habilita en Activar</span></div></div>
+    <div class="card" style="opacity:.5"><div style="display:flex; justify-content:space-between; align-items:center"><span style="font-size:14px; color:var(--text-muted)">05 · Activaciones</span><span class="pill pill-anon"><svg class="icon-sm"><use href="#ico-lock"/></svg>Sin campaña</span></div></div>
+    <div class="card" style="opacity:.5"><div style="display:flex; justify-content:space-between; align-items:center"><span style="font-size:14px; color:var(--text-muted)">06 · Decisiones</span><span class="pill pill-anon"><svg class="icon-sm"><use href="#ico-lock"/></svg>Cierre de temporada</span></div></div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- V5 — MAESTRO-DETALLE: 3 columnas, rail de comunidades + inspector -->
+<!-- ============================================================ -->
+<section class="screen" id="s5" hidden style="padding:0">
+  <div style="display:grid; grid-template-columns:200px 1fr 300px; min-height:640px">
+    <aside style="background:var(--panel-sunken); border-right:1px solid var(--border); padding:18px 14px">
+      <div class="eyebrow" style="margin-bottom:12px">Comunidades</div>
+      <div style="padding:10px; border-radius:var(--radius-input); background:var(--panel-raised); border:1px solid var(--border-strong); margin-bottom:4px">
+        <b style="font-size:13px; color:#fff">Todo un País</b><div style="font-size:11px; color:var(--text-faint)">Activar</div>
+      </div>
+      <div style="padding:10px; border-radius:var(--radius-input)"><span style="font-size:13px">Cortado en Jarrito</span><div style="font-size:11px; color:var(--text-faint)">Diseñar</div></div>
+    </aside>
+
+    <div style="padding:22px 24px; border-right:1px solid var(--border)">
+      <div class="eyebrow">Activo <span class="arrow">↘</span> Relación</div>
+      <h3 style="font-size:18px; margin-top:6px">Miembros con vínculo por grupo</h3>
+      <div style="display:flex; flex-direction:column; gap:1px; margin-top:16px; border:1px solid var(--border); border-radius:var(--radius-card); overflow:hidden">
+        <div style="display:flex; justify-content:space-between; padding:12px 14px; background:var(--panel-raised); cursor:pointer; border-left:2px solid var(--tq-fucsia)">
+          <span style="font-size:13px; color:#fff">#A-0250 · Quines</span><span class="pill pill-nominal">● Nominal</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:12px 14px; border-top:1px solid var(--border)"><span style="font-size:13px">#A-0182 · San Luis Capital</span><span class="pill pill-nominal">● Nominal</span></div>
+        <div style="display:flex; justify-content:space-between; padding:12px 14px; border-top:1px solid var(--border)"><span style="font-size:13px; color:var(--text-muted)">#A-0183 · Quines</span><span class="pill pill-anon">Anónimo</span></div>
+        <div style="display:flex; justify-content:space-between; padding:12px 14px; border-top:1px solid var(--border)"><span style="font-size:13px; color:var(--text-muted)">#A-0233 · San Luis Capital</span><span class="pill pill-anon">Anónimo</span></div>
+        <div style="display:flex; justify-content:space-between; padding:12px 14px; border-top:1px solid var(--border)"><span style="font-size:13px">#A-0201 · La Toma</span><span class="pill pill-nominal">● Nominal</span></div>
+      </div>
+    </div>
+
+    <aside style="padding:22px 20px; display:flex; flex-direction:column; gap:20px">
+      <div>
+        <div class="eyebrow" style="color:var(--tq-fucsia)">Ficha seleccionada</div>
+        <h3 style="font-size:17px; margin-top:6px">Julián Peralta</h3>
+        <div style="font-size:12px; color:var(--text-faint)">#A-0250 · Quines</div>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:14px; font-size:12px">
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-muted)">Interés</span><span style="color:#fff">Seguridad</span></div>
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-muted)">Nivel de activación</span><span style="color:#fff">5/5</span></div>
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-muted)">Fuente</span><span style="color:#fff">Referido interno</span></div>
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-muted)">Alta</span><span style="color:#fff">22/08</span></div>
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-muted)">Estado</span><span class="pill pill-nominal">● Nominal</span></div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border); padding-top:16px">
+        <div class="eyebrow">Utilidades</div>
+        <div style="display:flex; flex-direction:column; gap:6px; margin-top:10px">
+          <button class="btn btn-sm" style="justify-content:flex-start">Importar planilla</button>
+          <button class="btn btn-sm" style="justify-content:flex-start">Exportar CSV / XLSX</button>
+          <button class="btn btn-sm btn-fucsia" style="justify-content:flex-start"><svg class="icon-sm"><use href="#ico-lock"/></svg>Ver Mapa de Voces</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- V6 — FICHA CRM CLÁSICA: carpetas segmentadas + registro grande -->
+<!-- ============================================================ -->
+<section class="screen" id="s6" hidden style="padding:0">
+  <div style="display:grid; grid-template-columns:216px 300px 1fr; min-height:640px">
+    <aside style="background:var(--panel-sunken); border-right:1px solid var(--border); padding:18px 14px">
+      <div class="eyebrow" style="margin-bottom:4px">Todo un País</div>
+      <div style="font-size:11px; color:var(--text-faint); margin-bottom:14px">Vistas guardadas</div>
+      <div style="display:flex; flex-direction:column; gap:1px">
+        <div style="display:flex; justify-content:space-between; padding:9px 10px; border-radius:var(--radius-input); background:var(--panel-raised)"><span style="font-size:13px; color:#fff">Todos</span><span class="mono" style="font-size:11px">1.842</span></div>
+        <div style="display:flex; justify-content:space-between; padding:9px 10px; border-radius:var(--radius-input)"><span style="font-size:13px; color:var(--tq-fucsia)">Nominalizados</span><span class="mono" style="font-size:11px">1.240</span></div>
+        <div style="display:flex; justify-content:space-between; padding:9px 10px; border-radius:var(--radius-input)"><span style="font-size:13px">No-nominalizados</span><span class="mono" style="font-size:11px">602</span></div>
+        <div style="display:flex; justify-content:space-between; padding:9px 10px; border-radius:var(--radius-input)"><span style="font-size:13px">San Luis Capital</span><span class="mono" style="font-size:11px">781</span></div>
+        <div style="display:flex; justify-content:space-between; padding:9px 10px; border-radius:var(--radius-input)"><span style="font-size:13px">Quines</span><span class="mono" style="font-size:11px">612</span></div>
+        <div style="display:flex; justify-content:space-between; padding:9px 10px; border-radius:var(--radius-input)"><span style="font-size:13px">La Toma</span><span class="mono" style="font-size:11px">449</span></div>
+      </div>
+      <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--border)">
+        <div style="display:flex; justify-content:space-between; padding:9px 10px; border-radius:var(--radius-input); background:rgba(255,0,184,.08)"><span style="font-size:13px; color:var(--tq-fucsia); display:flex; align-items:center"><svg class="icon-sm"><use href="#ico-lock"/></svg>Mapa de Voces</span><span class="mono" style="font-size:11px; color:var(--tq-fucsia)">18</span></div>
+      </div>
+      <div style="margin-top:18px; display:flex; flex-direction:column; gap:6px">
+        <button class="btn btn-sm">Importar</button>
+        <button class="btn btn-primary btn-sm">Exportar</button>
+      </div>
+    </aside>
+
+    <div style="border-right:1px solid var(--border); overflow-y:auto">
+      <div style="padding:14px 16px; border-bottom:1px solid var(--border); font-size:12px; color:var(--text-faint)">Nominalizados · orden: nivel de activación</div>
+      <div style="padding:13px 16px; border-bottom:1px solid var(--border); background:var(--panel-raised); border-left:2px solid var(--tq-fucsia)">
+        <div style="display:flex; justify-content:space-between"><b style="font-size:13px; color:#fff">Julián Peralta</b><span class="mono" style="font-size:11px">5/5</span></div>
+        <div style="font-size:11px; color:var(--text-faint); margin-top:2px">Quines · Seguridad</div>
+      </div>
+      <div style="padding:13px 16px; border-bottom:1px solid var(--border)">
+        <div style="display:flex; justify-content:space-between"><span style="font-size:13px">Rosa Gómez</span><span class="mono" style="font-size:11px">4/5</span></div>
+        <div style="font-size:11px; color:var(--text-faint); margin-top:2px">San Luis Capital · Seguridad</div>
+      </div>
+      <div style="padding:13px 16px; border-bottom:1px solid var(--border)">
+        <div style="display:flex; justify-content:space-between"><span style="font-size:13px">Mauro Ibáñez</span><span class="mono" style="font-size:11px">3/5</span></div>
+        <div style="font-size:11px; color:var(--text-faint); margin-top:2px">La Toma · Movilidad</div>
+      </div>
+      <div style="padding:13px 16px; border-bottom:1px solid var(--border)">
+        <div style="display:flex; justify-content:space-between"><span style="font-size:13px">Nadia Ferreyra</span><span class="mono" style="font-size:11px">3/5</span></div>
+        <div style="font-size:11px; color:var(--text-faint); margin-top:2px">San Luis Capital · Espacios públicos</div>
+      </div>
+    </div>
+
+    <div style="padding:26px 30px">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start">
+        <div>
+          <h2 style="font-size:22px">Julián Peralta</h2>
+          <div style="font-size:13px; color:var(--text-muted); margin-top:4px">#A-0250 · Tel •••• 5523 · Quines, San Luis</div>
+        </div>
+        <span class="pill pill-nominal" style="font-size:12px; padding:5px 12px">● Nominal — candidato Mapa de Voces</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:22px">
+        <div class="kpi" style="padding:12px 14px"><div class="v" style="font-size:20px">5/5</div><div class="l">Nivel de activación</div></div>
+        <div class="kpi" style="padding:12px 14px"><div class="v" style="font-size:20px">Seguridad</div><div class="l">Interés declarado</div></div>
+        <div class="kpi" style="padding:12px 14px"><div class="v" style="font-size:20px">0.82</div><div class="l">Afinidad narrativa</div></div>
+        <div class="kpi" style="padding:12px 14px"><div class="v" style="font-size:20px">4</div><div class="l">Semanas consecutivas activo</div></div>
+      </div>
+
+      <h3 style="font-size:14px; margin-top:30px; color:var(--text-strong)">Journey</h3>
+      <div style="display:flex; flex-direction:column; gap:0; margin-top:14px; border-left:1px solid var(--border-strong); padding-left:18px">
+        <div style="position:relative; padding-bottom:20px">
+          <div style="position:absolute; left:-23px; top:2px" class="dot dot-on"></div>
+          <div style="font-size:13px; color:#fff">Awareness — vio Reel &gt;50%</div><div style="font-size:11px; color:var(--text-faint)">08/08 · IG</div>
+        </div>
+        <div style="position:relative; padding-bottom:20px">
+          <div style="position:absolute; left:-23px; top:2px" class="dot dot-on"></div>
+          <div style="font-size:13px; color:#fff">Clic a WhatsApp</div><div style="font-size:11px; color:var(--text-faint)">08/08 · WA_Click Quines</div>
+        </div>
+        <div style="position:relative; padding-bottom:20px">
+          <div style="position:absolute; left:-23px; top:2px" class="dot dot-on"></div>
+          <div style="font-size:13px; color:#fff">Onboarding del bot completado</div><div style="font-size:11px; color:var(--text-faint)">08/08 · declaró Quines + Seguridad</div>
+        </div>
+        <div style="position:relative">
+          <div style="position:absolute; left:-23px; top:2px" class="dot dot-on"></div>
+          <div style="font-size:13px; color:#fff">Referido interno — trajo a otro vecino</div><div style="font-size:11px; color:var(--text-faint)">22/08</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+const versions = [
+  {id:'s1', label:'01 Consola', title:'Consola operativa', desc:'Sidebar de comunidades + tabla densa de miembros. El más cercano a una herramienta de trabajo diario: activos como tabs, KPIs de Crecimiento arriba, filtro nominal/no-nominal y toolbar de import/export siempre a mano.'},
+  {id:'s2', label:'02 Islas', title:'Mapa de islas', desc:'Pantalla de inicio visual: cada comunidad es una "isla" con su North Star, su avance de temporada y su estado. Al entrar, los 6 activos se ven como un tablero de 6 casilleros — bueno para una primera lectura de estado, no para operar el día a día.'},
+  {id:'s3', label:'03 Torre de control', title:'Torre de control', desc:'La única vista con las dos comunidades una al lado de la otra: KPIs cruzados arriba, tabla comparativa abajo. Pensada para un chequeo semanal de todo el porfolio, no para entrar a trabajar una comunidad puntual.'},
+  {id:'s4', label:'04 Temporada', title:'Línea de temporada', desc:'La etapa (Detectar→Entender→Diseñar→Activar→Crecer) manda arriba de todo; los 6 activos bajan en acordeón, expandidos los que están activos. Refuerza que el CRM sigue el proceso metodológico de Taquión, no solo datos sueltos.'},
+  {id:'s5', label:'05 Maestro-detalle', title:'Maestro-detalle', desc:'Tres columnas: comunidades, contenido del activo elegido, y un inspector fijo a la derecha con la ficha del miembro seleccionado más los accesos a Import/Export y Mapa de Voces — separados a propósito, no mezclados en la tabla principal.'},
+  {id:'s6', label:'06 Ficha CRM', title:'Ficha CRM clásica', desc:'El más parecido a un CRM tradicional: carpetas segmentadas a la izquierda (Nominalizados / No-nominalizados / por localidad / Mapa de Voces), lista al medio, y una ficha grande a la derecha con el journey del miembro paso a paso.'},
+];
+const tabsEl = document.getElementById('tabs');
+const captionEl = document.getElementById('caption');
+versions.forEach((v,i)=>{
+  const b = document.createElement('button');
+  b.className = 'lab-tab' + (i===0?' active':'');
+  b.textContent = v.label;
+  b.onclick = () => select(i);
+  tabsEl.appendChild(b);
+});
+function select(i){
+  versions.forEach((v,idx)=>{
+    document.getElementById(v.id).hidden = idx!==i;
+    tabsEl.children[idx].classList.toggle('active', idx===i);
+  });
+  captionEl.innerHTML = '<b>'+versions[i].title+'.</b> ' + versions[i].desc;
+}
+select(0);
+</script>
