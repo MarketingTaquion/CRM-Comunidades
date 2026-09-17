@@ -461,3 +461,22 @@ end $$;
 --   ));
 -- revoke all on crm_comunidades.contacto from cliente_role;
 -- grant select on crm_comunidades.export_nivel1_agregado to cliente_role;
+
+-- ----------------------------------------------------------------------------
+-- GRANTs de schema/tabla (Supabase NO los aplica automáticamente para un
+-- schema propio como este — solo lo hace para `public`). Sin esto, PostgREST
+-- devuelve "permission denied for schema crm_comunidades" incluso con RLS y
+-- policies bien definidas: RLS filtra FILAS, pero antes de llegar ahí Postgres
+-- exige USAGE sobre el schema y el privilegio de tabla correspondiente.
+-- Detectado en producción 2026-09-17 tras el primer login real.
+-- ----------------------------------------------------------------------------
+grant usage on schema crm_comunidades to anon, authenticated, service_role;
+grant select, insert, update, delete on all tables in schema crm_comunidades to authenticated;
+grant select on all tables in schema crm_comunidades to anon;
+grant select, insert, update, delete on all tables in schema crm_comunidades to service_role;
+grant usage, select on all sequences in schema crm_comunidades to authenticated, service_role;
+grant execute on all functions in schema crm_comunidades to anon, authenticated, service_role;
+alter default privileges in schema crm_comunidades grant select, insert, update, delete on tables to authenticated, service_role;
+alter default privileges in schema crm_comunidades grant select on tables to anon;
+alter default privileges in schema crm_comunidades grant usage, select on sequences to authenticated, service_role;
+alter default privileges in schema crm_comunidades grant execute on functions to anon, authenticated, service_role;
