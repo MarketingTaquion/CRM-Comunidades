@@ -28,4 +28,12 @@ mockups/panel-admin-6-versiones.html → exploración visual previa (6 direccion
 
 ## Deploy
 
-**Live: https://crm-comunidades-taquion.netlify.app** — proyecto `crm-comunidades-taquion` en Netlify, team `Marketing-Taquion-IGNITE`, deploy automático desde `master` de este repo. Sitio estático, sin build step (`netlify.toml` con `publish = "."`), sin variables de entorno todavía porque no hay conexión real a Supabase. Cuando se conecte Supabase (paso 1 de arriba), sumar `SUPABASE_URL` / `SUPABASE_ANON_KEY` como variables de entorno del sitio, igual que en `ignite-brief`.
+**Live: https://crm-comunidades-taquion.netlify.app** — proyecto `crm-comunidades-taquion` en Netlify, team `Marketing-Taquion-IGNITE`, deploy automático desde `master` de este repo. Build step mínimo (`npm run build` → `node scripts/generate-config.js`) que genera `config.js` desde las env vars `SUPABASE_URL` / `SUPABASE_ANON_KEY` ya cargadas en el sitio — mismo patrón que `ignite-brief`.
+
+## Conectado a Supabase de verdad (2026-09-18)
+
+- **Login real:** Supabase Auth, email/password. Un solo usuario admin creado por invitación (`marketing@taquion.com.ar`) y vinculado a `admin_taquion` en `usuario_comunidad`. Sin esto, las consultas hubieran vuelto vacías siempre — RLS ya exige `auth.uid()` real.
+- **Requisitos de Supabase que no son obvios y hay que recordar si se resetea el proyecto:** el schema `crm_comunidades` y sus 11 tablas/vistas tienen que estar **expuestos en Data API** (Project Settings → Data API → Exposed schemas / Exposed tables) — por default Supabase solo expone `public`, y un schema nuevo no aparece en la REST API aunque el SQL esté perfecto.
+- **Conectado con datos reales:** comunidades (`comunidad` + `comunidad_activo`), funnel de Crecimiento (agregado real de `contacto.estado_identificacion`), tabla de Relación (`contacto` + join a `arquetipo`), Mapa de Voces (vista `mapa_de_voces`), export Nivel 1 (CSV real desde `export_nivel1_agregado`).
+- **Deliberadamente sin conectar:** Conocimiento y Voz (sentiment, piezas publicadas, brecha semántica) — no hay tabla que los respalde todavía, así que la UI lo dice explícitamente en vez de simular esos números. CPME/CPMR/TRG/K-Factor en Crecimiento — requieren datos de inversión en pauta que tampoco están cargados. Export Nivel 2/3 — botones deshabilitados, sin endpoint construido.
+- Datos semilla cargados: las 3 comunidades piloto/demo con sus activos habilitados según etapa, arquetipos de Un Metro Cuadrado y Cortado en Jarrito (con la exclusión C2/C3 explícita), y un puñado de contactos de ejemplo por comunidad para que Crecimiento/Relación/Mapa de Voces no arranquen en cero.
