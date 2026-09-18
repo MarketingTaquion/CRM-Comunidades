@@ -505,15 +505,38 @@ function renderVoz(c){
     <div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Canal</th><th>Formato</th><th>Alcance</th><th>Engagement</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 
-function renderActivaciones(c){
-  const ejemplos = [
-    { fecha:'12 ago 2026', tipo:'Feria de barrio', descripcion:'Stand presencial en la feria de Chacarita, activación con el corredor Norte.', resultado:'34 contactos nuevos, 6 pasaron a "identificado" en la semana siguiente.' },
-    { fecha:'03 jul 2026', tipo:'Meetup con vecinos', descripcion:'Encuentro presencial con arquetipos C1/C4 sobre agenda de espacios públicos.', resultado:'12 asistentes, 2 candidatos a Mapa de Voces.' },
-    { fecha:'21 jun 2026', tipo:'Activación en WhatsApp', descripcion:'Campaña puntual invitando a completar la encuesta de intereses.', resultado:'58 respuestas, tasa de respuesta 41%.' },
-  ];
-  const rows = ejemplos.map(e => `<tr><td style="color:var(--text-faint); white-space:nowrap">${e.fecha}</td><td>${e.tipo}</td><td>${e.descripcion}</td><td>${e.resultado}</td></tr>`).join('');
-  return `<div class="card"><h3>Activaciones recientes</h3><div class="sub">Contenido de ejemplo — todavía no está conectado a <code>evento_journey</code> (tipo <code>'activacion'</code>). Se desbloqueó este activo para poder revisar el diseño de la vista antes de cablearlo a datos reales.</div>
-    <div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Resultado</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+async function loadActivaciones(comunidadId){
+  const { data, error } = await supabase
+    .from('activacion').select('*').eq('comunidad_id', comunidadId)
+    .order('fecha_inicio', { ascending:false, nullsFirst:false });
+  if (error) throw error;
+  return data || [];
+}
+
+const ACTIVACION_TIPO_LABEL = { sponsor_anunciante:'Sponsor / anunciante', marca_contratante:'Marca contratante' };
+const ACTIVACION_ESTADO_LABEL = { planificada:'Planificada', en_curso:'En curso', cerrada:'Cerrada', cancelada:'Cancelada' };
+
+function fmtKpiJson(v){
+  if (!v) return '—';
+  try { return Object.entries(v).map(([k,n])=>`${k}: ${n}`).join(', ') || '—'; }
+  catch { return '—'; }
+}
+
+function renderActivaciones(activaciones){
+  if (!activaciones.length){
+    return `<div class="card"><h3>Sin activaciones cargadas todavía</h3><div class="sub" style="margin-bottom:0">Este activo ya está conectado a la tabla real <code>crm_comunidades.activacion</code> (db/003_activaciones.sql) — no hay datos de ejemplo acá. En cuanto se cargue la primera activación de esta comunidad, aparece en esta vista.</div></div>`;
+  }
+  const rows = activaciones.map(a => `<tr>
+      <td style="color:var(--text-faint); white-space:nowrap">${a.fecha_inicio || '—'}${a.fecha_fin ? ' → '+a.fecha_fin : ''}</td>
+      <td>${a.nombre}</td>
+      <td>${ACTIVACION_TIPO_LABEL[a.tipo] || a.tipo}</td>
+      <td>${ACTIVACION_ESTADO_LABEL[a.estado] || a.estado}</td>
+      <td>${a.responsable || '—'}</td>
+      <td class="mono" style="font-size:12px">${fmtKpiJson(a.kpi_objetivo)}</td>
+      <td class="mono" style="font-size:12px">${fmtKpiJson(a.kpi_resultado)}</td>
+    </tr>`).join('');
+  return `<div class="card"><h3>Activaciones</h3><div class="sub">Datos reales de <code>crm_comunidades.activacion</code>, deliberadamente separados de Crecimiento (no toca <code>contacto</code>/<code>evento_journey</code>).</div>
+    <div class="tbl-wrap"><table><thead><tr><th>Fechas</th><th>Nombre</th><th>Tipo</th><th>Estado</th><th>Responsable</th><th>KPI objetivo</th><th>KPI resultado</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 
 function renderDecisiones(c){
@@ -758,7 +781,7 @@ async function renderAll(){
       const [contactos, mapaVoces] = await Promise.all([loadContactos(state.comunidad), loadMapaVoces(state.comunidad)]);
       content.innerHTML = renderRelacion(contactos, mapaVoces, state.role);
     }
-    else if (state.activo === 'activaciones') content.innerHTML = renderActivaciones(c);
+    else if (state.activo === 'activaciones') content.innerHTML = renderActivaciones(await loadActivaciones(state.comunidad));
     else if (state.activo === 'decisiones') content.innerHTML = renderDecisiones(c);
   } catch (err) {
     content.innerHTML = `<div class="card"><h3>Error consultando Supabase</h3><div class="sub" style="margin-bottom:0; color:var(--tq-naranja)">${err.message}</div></div>`;

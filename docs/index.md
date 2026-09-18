@@ -32,6 +32,7 @@ Esta documentación está organizada según [Diátaxis](https://diataxis.fr/): e
 - [Arquitectura y aislamiento de datos](explanation/arquitectura-y-aislamiento-de-datos.md)
 - [Modelo de identificación y gobernanza de exportación](explanation/modelo-de-identificacion-y-gobernanza-de-exportacion.md)
 - [Seguridad: RLS, GRANTs y visibilidad de Netlify](explanation/seguridad-rls-grants-y-netlify.md)
+- [Ingesta de datos: por qué el circuito UTM/ManyChat todavía no existe](explanation/ingesta-de-datos-y-circuito-utm.md)
 
 ---
 

@@ -139,6 +139,48 @@ Audit log obligatorio de toda exportación Nivel 2/3 (Nivel 1 no lo requiere).
 | `filas_totales`, `filas_nuevas`, `filas_duplicadas` | int |
 | `importado_por` | text |
 
+### `activacion`
+Registro propio del activo 5 (Activaciones). Definida en [`db/003_activaciones.sql`](../../db/003_activaciones.sql).
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | uuid, PK | |
+| `comunidad_id` | uuid, FK → `comunidad.id` on delete cascade | |
+| `nombre` | text, not null | |
+| `tipo` | text | `sponsor_anunciante` \| `marca_contratante` |
+| `objetivo_negocio` | text | |
+| `brief` | text | |
+| `fecha_inicio` / `fecha_fin` | date | |
+| `kpi_objetivo` / `kpi_resultado` | jsonb | Shape libre (ej. `{"leads_calificados": 500}`) — cada activación puede medir cosas distintas, mismo criterio que `contacto.score_compuesto` |
+| `estado` | text | `planificada` \| `en_curso` \| `cerrada` \| `cancelada` |
+| `responsable` | text | Nombre del AM a cargo, texto libre |
+| `responsable_usuario_id` | uuid, FK → `auth.users.id`, nullable | Para cuando `am_estratega` tenga login real |
+| `created_at` / `updated_at` | timestamptz | |
+
+Sin ninguna FK hacia `contacto` ni `evento_journey` — deliberado, ver [Modelo de identificación y gobernanza de exportación](../explanation/modelo-de-identificacion-y-gobernanza-de-exportacion.md#activaciones-activo-5-por-qué-no-toca-crecimiento).
+
+### `temporada`
+Fechas de cada temporada por comunidad — `comunidad.temporada_numero`/`fecha_inicio_temporada` solo guardan la actual, esta tabla guarda el historial. Definida en [`db/004_informe_decision_insumo.sql`](../../db/004_informe_decision_insumo.sql).
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `comunidad_id` | uuid, FK → `comunidad.id`, parte de la PK | |
+| `numero` | int, parte de la PK | |
+| `fecha_inicio` | date, not null | |
+| `fecha_fin` | date, nullable | Null = temporada abierta |
+
+### `informe_decision`
+El análisis cualitativo del cierre de temporada — se escribe a mano, ningún objeto del esquema le escribe automáticamente. Definida en [`db/004_informe_decision_insumo.sql`](../../db/004_informe_decision_insumo.sql).
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `comunidad_id`, `temporada_numero` | PK compuesta, FK → `temporada` | |
+| `semaforo` | text | `verde` \| `amarillo` \| `rojo` |
+| `aprendizajes` | text | |
+| `plan_accion` | jsonb | `[{accion, prioridad, responsable, fecha_limite}, ...]` |
+| `escrito_por` | text | |
+| `creado_en` / `actualizado_en` | timestamptz | |
+
 ## Vistas
 
 ### `mapa_de_voces`
@@ -155,6 +197,9 @@ Mismo archivo. Agregado por `comunidad_id` y arquetipo (nombre, o `interes_decla
 
 ### `comunidad_metricas`
 Una fila por comunidad con `total_contactos`, `contactos_activos`, `contactos_dados_de_baja`, `contactos_engaged`, `engagement_rate`, `tasa_referidos` y `tasa_abandono`. `engagement_rate` es real hoy (se apoya en `nivel_activacion`, ya poblado); `tasa_referidos` y `tasa_abandono` dependen de que se cargue `referido_por_contacto_id`/`fecha_baja` — devuelven `0` honestamente hasta que eso pase, nunca se infieren. Ver el porqué en [Modelo de identificación y gobernanza de exportación](../explanation/modelo-de-identificacion-y-gobernanza-de-exportacion.md#overview-y-métricas-de-performance). `security_invoker = true`.
+
+### `informe_decision_insumo`
+Definida en [`db/004_informe_decision_insumo.sql`](../../db/004_informe_decision_insumo.sql). Una fila por `comunidad_id` + `temporada_numero` (join con `temporada`), con dos lecturas por fila: **foto acumulada al cierre** (`total_contactos`, `contactos_activos`, `contactos_dados_de_baja`, `engagement_rate`, `tasa_referidos`, `tasa_abandono`, `cantidad_mapa_de_voces`, todas acotadas a `fecha_fin` o a hoy si la temporada sigue abierta) y **actividad ocurrida en la temporada** (`contactos_nuevos_temporada`, `referidos_temporada`, `bajas_temporada`, acotadas al rango `fecha_inicio`–`fecha_fin`). `engagement_rate` no tiene versión de período: `nivel_activacion` no tiene tabla de historial, así que solo puede leerse como foto. 100% automática — nunca escribe el análisis cualitativo, eso vive en `informe_decision`. Devuelve 0 filas para una comunidad sin fila en `temporada` todavía. `security_invoker = true`. Ver [Modelo de identificación y gobernanza de exportación](../explanation/modelo-de-identificacion-y-gobernanza-de-exportacion.md#informe-de-decisión-ejecutiva-insumo-automático-vs-informe-escrito-a-mano).
 
 ## Funciones
 
