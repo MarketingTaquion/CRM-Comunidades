@@ -1,0 +1,55 @@
+# Roadmap — CRM de Comunidades sobre el playbook oficial
+
+Estado: vivo, se actualiza a medida que se define orden y alcance. No es un spec de una tarea puntual (ver el resto de `specs/` para eso) — es el mapa de dónde encaja el CRM en la metodología de Comunidades y hacia dónde va.
+
+Fuentes: `SDD-TAQUION/specs/006-crm-comunidades.md`, `SDD-TAQUION/docs/contexto-madre.md`, Playbook de Producto "Comunidad" (capturas 2026-09-16), y el estado real de este repo (`db/001`–`004`, `README.md`, `docs/`).
+
+## Aporte por etapa del playbook
+
+| Etapa | Qué recibo | Mis accionables | Qué entrego a otros equipos | Estado en el CRM hoy |
+|---|---|---|---|---|
+| **Detectar** | Research inicial de Insights (segmentación, encuesta, clustering) y datos crudos de captura (ManyChat/planillas) | Alta de la comunidad (`comunidad`) y su roster de arquetipos (`arquetipo`, exclusión siempre explícita); diseño de `estado_identificacion` para clasificar cada contacto desde el primer punto de contacto | El registro único de la comunidad —reemplaza la planilla suelta— con el roster de arquetipos listo para que Insights/AM lo validen y para que el resto de los activos trabajen sobre la misma base | `comunidad` + `arquetipo` + `estado_identificacion` construidos y aplicados (db/001); alta de comunidad ya documentada (how-to) |
+| **Entender + Diseñar** ("Estrategia de Destino", tope 2 meses) | Research cuali/cuanti y social listening de Insights; narrativa/naming de Inspire; North Star y límites del Blueprint definidos por AM+Estratega | Modelar los activos Conocimiento (temas, sentiment, brecha semántica) y Voz (piezas, alcance, engagement) en el panel, manteniendo separado lo real de lo de ejemplo mientras no exista fuente de listening real | El panel de Conocimiento/Voz como espacio único donde cliente y AM ven el diagnóstico consolidado, listo para conectar la fuente real cuando exista | Conocimiento y Voz en el panel con contenido de ejemplo marcado como tal explícitamente — sin tabla real de sentiment/piezas todavía |
+| **Activar** | Brief y objetivo de negocio de cada campaña (sponsor o marca contratante) de AM + Ignite | Tabla `activacion` propia (nombre, tipo, objetivo, brief, fechas, KPI objetivo/resultado, estado, responsable), separada de Crecimiento; spec de disparo de segmentos hacia ManyChat vía tag; landing pages con IA + CRO vía PostHog para cada campaña; activación de captación de audios de VOC vía email/push notification | A AM/Ignite un registro único por campaña con su propia medición, sin mezclar con el funnel de adquisición; landing pages de campaña con conversión optimizada; la activación que solicita los audios de VOC a los miembros por email o push | Tabla `activacion` aplicada y con RLS (db/003), panel ya lee de ahí (vacío hasta la primera carga real); landing pages con IA/CRO y canal de email/push — todavía no integrados al repo del CRM |
+| **Crecer** | Journey/adquisición vía ManyChat (hoy sin integrar, ver auditoría UTM) y nivel de activación cargado manualmente | Overview (barrio/arquetipo + engagement/abandono/referidos reales por comunidad), funnel de Crecimiento por `estado_identificacion`, Mapa de Voces (vista gobernada, nunca al cliente); auditoría del circuito UTM/ManyChat con evidencia real; sistema de VOC con captación de audios y embeddings para transcripción y búsqueda semántica | A AM/dirección un panel de performance por comunidad (nunca promediado entre comunidades) y el diagnóstico honesto de qué falta para la atribución de canal; a Insights un repositorio de voz de la comunidad transcripto y buscable | Overview + Crecimiento + Relación + Mapa de Voces reales y funcionando (db/002); circuito UTM auditado, documentado como pendiente (0% de contactos con UTM cargado); VOC — no construido todavía |
+| **Cierre de temporada** (transversal, Informe de Decisión Ejecutiva) | Lo cuantitativo ya instrumentado en Crecimiento/Relación al momento del cierre | Vista automática `informe_decision_insumo` (foto acumulada al cierre + actividad de la temporada) y tabla `informe_decision` para que Insights/liderazgo escriban semáforo, aprendizajes y plan de acción a mano | A liderazgo/Insights el insumo numérico listo para el informe, sin fabricar el análisis cualitativo que les corresponde escribir a ellos | `temporada` + `informe_decision` + `informe_decision_insumo` aplicados (db/004); arranca vacío hasta cargar la primera fecha real de temporada |
+
+## Roadmap de construcción
+
+### Fase 0 — Base del CRM · **Hecho**
+- Comunidad + roster de arquetipos + `estado_identificacion` (db/001)
+- Overview, funnel de Crecimiento, Relación y Mapa de Voces reales, nunca promediados entre comunidades (db/002)
+- Activaciones como tabla propia, separada de Crecimiento (db/003)
+- Insumo automático + informe escrito a mano para el cierre de temporada (db/004)
+- Auditoría del circuito UTM/ManyChat, documentada con evidencia real
+
+### Fase 1 — API pública · **Próximo**
+- Exponer la REST API de Supabase con API keys propias
+- Definir qué tablas/vistas salen hacia afuera y qué puede entrar desde otras herramientas
+
+### Fase 2 — Reportes · **Próximo**
+- Reportes manuales cargados por evento
+- Programación de reportes automáticos con variables configurables, dentro del panel
+
+### Fase 3 — Cerrar el circuito de datos · Planeado
+- Webhook o importación real ManyChat → CRM (hoy 0% de contactos con UTM cargado)
+- Job semanal de recálculo de `nivel_activacion` / `semanas_consecutivas_activo`
+
+### Fase 4 — Activaciones avanzadas · Planeado
+- Disparo de segmentos hacia ManyChat vía tag (spec lista en `2026-09-18-utm-manychat-y-disparo-campanas.md`, requiere backend nuevo)
+- Landing pages con IA + CRO vía PostHog (experiments, feature flags, session replay) para cada campaña puntual
+- Activación de captación de audios de VOC por email/push notification
+
+### Fase 5 — VOC (Voice of Customer) · Planeado
+- Pipeline de audio → transcripción → embeddings → búsqueda semántica
+- Insumo para Insights, complementa (no reemplaza) la escucha manual de Conocimiento
+
+### Fase 6 — Roles y gobernanza · Planeado
+- Login real + RLS para `am_estratega`/`cliente`
+- Exports Nivel 2/3 con audit log
+
+## Notas de alcance
+
+- El orden Fase 1 → Fase 2 (API pública antes que Reportes) fue confirmado explícitamente antes de este roadmap.
+- Fases 3 a 6 están mapeadas pero sin orden relativo confirmado todavía — se prioriza cuando corresponda.
+- Este documento no reemplaza los specs de tarea puntual (`2026-09-18-activaciones-tabla.md`, `2026-09-18-informe-decision-insumo.md`, `2026-09-18-utm-manychat-y-disparo-campanas.md`) — los referencia.
