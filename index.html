@@ -450,11 +450,6 @@ function lockedPanel(msg){
   return `<div class="locked-panel"><svg><use href="#ico-lock"/></svg><b>Activo deshabilitado</b><span>${msg}</span></div>`;
 }
 
-function notConnectedPanel(nombre){
-  return `<div class="card"><h3>${nombre} todavía no tiene fuente de datos conectada</h3>
-    <div class="sub" style="margin-bottom:0">Este activo está habilitado para la comunidad, pero el esquema de <code>crm_comunidades</code> hoy no modela sentiment, piezas publicadas ni brecha semántica (specs/006, "Fuera de alcance": análisis de sentimiento/tópicos queda como fase posterior). En vez de simular estos números, esta vista queda honestamente vacía hasta que se sume esa fuente real.</div></div>`;
-}
-
 function stateClass(k){ return 'state-' + k; }
 
 function contactName(c, role){
@@ -467,8 +462,48 @@ function contactName(c, role){
   return 'contacto identificado';
 }
 
-function renderConocimiento(c){ return notConnectedPanel('Conocimiento'); }
-function renderVoz(c){ return notConnectedPanel('Voz'); }
+function renderConocimiento(c){
+  const kpis = kpiGrid([
+    ['62%', 'Sentimiento positivo', 'Contenido de ejemplo — sobre 184 menciones analizadas'],
+    ['184', 'Menciones analizadas', 'Contenido de ejemplo — último corte'],
+    ['"Movilidad urbana"', 'Brecha semántica detectada', 'Contenido de ejemplo — tema con más volumen sin respuesta institucional'],
+  ]);
+  const temas = [
+    { tema:'Movilidad urbana', menciones:52 },
+    { tema:'Espacios verdes', menciones:38 },
+    { tema:'Seguridad barrial', menciones:29 },
+    { tema:'Actividades culturales', menciones:21 },
+    { tema:'Limpieza y residuos', menciones:14 },
+  ];
+  const max = Math.max(...temas.map(t=>t.menciones));
+  const barras = temas.map(t => `<div class="bar-row"><span>${t.tema}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(t.menciones/max*100)}%"></div></div><span class="bar-val">${t.menciones}</span></div>`).join('');
+  const citas = [
+    '"Estaría bueno que haya más bicisendas conectadas con el centro."',
+    '"El espacio verde de la esquina quedó re lindo después de la intervención."',
+    '"Nos gustaría tener más actividades los fines de semana para los chicos."',
+  ];
+  return kpis +
+    `<div class="card"><h3>Temas con más volumen</h3><div class="sub">Contenido de ejemplo — todavía no está conectado a una fuente real de escucha (el esquema de <code>crm_comunidades</code> hoy no modela sentiment ni tópicos, ver <code>docs/explanation</code>). Sirve para revisar el diseño de la vista.</div>${barras}</div>` +
+    `<div class="card"><h3>Citas representativas</h3><div class="sub" style="margin-bottom:0">Contenido de ejemplo, redactado para esta demo — no son citas reales de contactos.<br><br>${citas.map(c=>`<span style="color:var(--text-body)">${c}</span>`).join('<br><br>')}</div></div>`;
+}
+
+function renderVoz(c){
+  const kpis = kpiGrid([
+    ['9', 'Piezas publicadas', 'Contenido de ejemplo — último mes'],
+    ['12.400', 'Alcance total', 'Contenido de ejemplo — suma de impresiones'],
+    ['4,8%', 'Engagement promedio', 'Contenido de ejemplo — sobre alcance'],
+  ]);
+  const piezas = [
+    { fecha:'28 ago 2026', canal:'Instagram', formato:'Carrusel', alcance:'3.100', engagement:'5,2%' },
+    { fecha:'21 ago 2026', canal:'WhatsApp', formato:'Encuesta', alcance:'1.800', engagement:'9,1%' },
+    { fecha:'14 ago 2026', canal:'Instagram', formato:'Reel', alcance:'4.600', engagement:'6,0%' },
+    { fecha:'07 ago 2026', canal:'Newsletter', formato:'Mail', alcance:'2.900', engagement:'2,3%' },
+  ];
+  const rows = piezas.map(p => `<tr><td style="color:var(--text-faint); white-space:nowrap">${p.fecha}</td><td>${p.canal}</td><td>${p.formato}</td><td class="mono">${p.alcance}</td><td class="mono">${p.engagement}</td></tr>`).join('');
+  return kpis +
+    `<div class="card"><h3>Piezas recientes</h3><div class="sub">Contenido de ejemplo — todavía no está conectado a una fuente real (el esquema hoy no modela piezas publicadas ni distribución de contenido). Sirve para revisar el diseño de la vista.</div>
+    <div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Canal</th><th>Formato</th><th>Alcance</th><th>Engagement</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
 
 function renderActivaciones(c){
   const ejemplos = [
@@ -507,8 +542,14 @@ function renderCrecimiento(counts){
     const drop = drops[k];
     return `<div class="funnel-step"><div class="v">${counts[k].toLocaleString('es-AR')}</div><div class="l">${ESTADO_LABEL[k]}</div>${drop!==null?`<div style="font-size:10px;color:var(--tq-naranja);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">−${drop}% vs. paso anterior</div>`:''}${i<ESTADO_ORDEN.length-1?'<span class="funnel-arrow">→</span>':''}</div>`;
   }).join('') + `</div>`;
+  const kpisEjemplo = kpiGrid([
+    ['$210', 'CPME', 'Contenido de ejemplo — costo por mil engagements'],
+    ['$890', 'CPMR', 'Contenido de ejemplo — costo por mil respuestas'],
+    ['58%', 'TRG', 'Contenido de ejemplo — tasa de retención global'],
+    ['1,3x', 'K-Factor', 'Contenido de ejemplo — viralidad orgánica'],
+  ]);
   return `<div class="card"><h3>Funnel de identificación</h3><div class="sub">Un solo contacto avanzando por su <code>estado_identificacion</code> — no dos bases separadas. Conteo real de <code>crm_comunidades.contacto</code>.</div>${funnel}</div>` +
-    `<div class="card"><h3>CPME · CPMR · TRG · K-Factor</h3><div class="sub" style="margin-bottom:0">Estos KPIs requieren datos de inversión en pauta y retención semanal que todavía no están cargados en la base (no hay tabla de spend). Se agregan cuando se conecte esa fuente — no se fabrican acá.</div></div>`;
+    `<div class="card"><h3>CPME · CPMR · TRG · K-Factor</h3><div class="sub" style="margin-bottom:16px">Contenido de ejemplo — requieren datos de inversión en pauta y retención semanal que todavía no están cargados en la base (no hay tabla de spend). Se reemplazan por valores reales cuando se conecte esa fuente.</div>${kpisEjemplo}</div>`;
 }
 
 function renderRelacion(contactos, mapaVoces, role){
