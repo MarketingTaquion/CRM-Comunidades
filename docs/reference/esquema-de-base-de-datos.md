@@ -2,7 +2,7 @@
 
 Todo vive en el schema Postgres `crm_comunidades` (nunca en `public`, donde vive `pulso-ignite`). Fuente completa: [`db/001_init_crm_comunidades.sql`](../../db/001_init_crm_comunidades.sql).
 
-## Enums
+## Enumeraciones (Enums)
 
 | Enum | Valores (orden de declaración) |
 |---|---|

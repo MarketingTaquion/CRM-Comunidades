@@ -9,11 +9,11 @@ Esta documentación está organizada según [Diátaxis](https://diataxis.fr/): e
 | El dato exacto — una columna, una variable de entorno, un archivo — sin explicación alrededor | [`reference/`](reference/) |
 | Entender **por qué** algo está hecho así, qué alternativas se descartaron | [`explanation/`](explanation/) |
 
-## Tutorials — aprender haciendo
+## Tutoriales (Tutorials) — aprender haciendo
 
 - [Primer arranque en local](tutorials/primer-arranque-local.md)
 
-## How-to — resolver una tarea puntual
+## Guías prácticas (How-To Guides) — resolver una tarea puntual
 
 - [Desplegar a Netlify](how-to/desplegar-a-netlify.md)
 - [Agregar una comunidad nueva](how-to/agregar-una-comunidad.md)
@@ -21,13 +21,13 @@ Esta documentación está organizada según [Diátaxis](https://diataxis.fr/): e
 - [Exportar datos (Nivel 1)](how-to/exportar-datos-nivel-1.md)
 - [Diagnosticar problemas de acceso (login, permisos, email)](how-to/diagnosticar-problemas-de-acceso.md)
 
-## Reference — consultar un dato exacto
+## Referencia (Reference) — consultar un dato exacto
 
 - [Esquema de base de datos](reference/esquema-de-base-de-datos.md)
 - [Variables de entorno y config](reference/variables-de-entorno-y-config.md)
 - [Estructura del repositorio](reference/estructura-del-repositorio.md)
 
-## Explanation — entender el porqué
+## Explicación (Explanation) — entender el porqué
 
 - [Arquitectura y aislamiento de datos](explanation/arquitectura-y-aislamiento-de-datos.md)
 - [Modelo de identificación y gobernanza de exportación](explanation/modelo-de-identificacion-y-gobernanza-de-exportacion.md)
