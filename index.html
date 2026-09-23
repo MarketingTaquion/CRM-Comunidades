@@ -238,11 +238,14 @@ const supabase = (cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY)
   ? createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, { db: { schema: 'crm_comunidades' } })
   : null;
 
-const ACTIVOS = ['conocimiento','voz','crecimiento','relacion','activaciones','decisiones'];
-const ACTIVO_LABEL = {conocimiento:'Conocimiento',voz:'Voz',crecimiento:'Crecimiento',relacion:'Relación',activaciones:'Activaciones',decisiones:'Decisiones'};
+// Conocimiento y Voz salen de este CRM (pivot 2026-09-23, tratamiento de
+// leads en vez de loyalty) — pasan a ser responsabilidad de otro sector de
+// Taquion. El enum activo_tipo y comunidad_activo los conservan en la base
+// (no se tocan acá); queda pendiente de una futura auditoría interna
+// eliminarlos del esquema. Ver specs/2026-09-23-pivot-leads-whatsapp.md.
+const ACTIVOS = ['crecimiento','relacion','activaciones','decisiones'];
+const ACTIVO_LABEL = {crecimiento:'Crecimiento',relacion:'Relación',activaciones:'Activaciones',decisiones:'Decisiones'};
 const ACTIVO_SUB = {
-  conocimiento:'Escucha, análisis e interpretación de la comunidad',
-  voz:'Creación y distribución sistemática de contenido',
   crecimiento:'Adquisición, retención y funnel de identificación',
   relacion:'Punto donde la audiencia anonimizada pasa a ser nominada',
   activaciones:'El negocio entra a la comunidad',
@@ -462,48 +465,9 @@ function contactName(c, role){
   return 'contacto identificado';
 }
 
-function renderConocimiento(c){
-  const kpis = kpiGrid([
-    ['62%', 'Sentimiento positivo', 'Contenido de ejemplo — sobre 184 menciones analizadas'],
-    ['184', 'Menciones analizadas', 'Contenido de ejemplo — último corte'],
-    ['"Movilidad urbana"', 'Brecha semántica detectada', 'Contenido de ejemplo — tema con más volumen sin respuesta institucional'],
-  ]);
-  const temas = [
-    { tema:'Movilidad urbana', menciones:52 },
-    { tema:'Espacios verdes', menciones:38 },
-    { tema:'Seguridad barrial', menciones:29 },
-    { tema:'Actividades culturales', menciones:21 },
-    { tema:'Limpieza y residuos', menciones:14 },
-  ];
-  const max = Math.max(...temas.map(t=>t.menciones));
-  const barras = temas.map(t => `<div class="bar-row"><span>${t.tema}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(t.menciones/max*100)}%"></div></div><span class="bar-val">${t.menciones}</span></div>`).join('');
-  const citas = [
-    '"Estaría bueno que haya más bicisendas conectadas con el centro."',
-    '"El espacio verde de la esquina quedó re lindo después de la intervención."',
-    '"Nos gustaría tener más actividades los fines de semana para los chicos."',
-  ];
-  return kpis +
-    `<div class="card"><h3>Temas con más volumen</h3><div class="sub">Contenido de ejemplo — todavía no está conectado a una fuente real de escucha (el esquema de <code>crm_comunidades</code> hoy no modela sentiment ni tópicos, ver <code>docs/explanation</code>). Sirve para revisar el diseño de la vista.</div>${barras}</div>` +
-    `<div class="card"><h3>Citas representativas</h3><div class="sub" style="margin-bottom:0">Contenido de ejemplo, redactado para esta demo — no son citas reales de contactos.<br><br>${citas.map(c=>`<span style="color:var(--text-body)">${c}</span>`).join('<br><br>')}</div></div>`;
-}
-
-function renderVoz(c){
-  const kpis = kpiGrid([
-    ['9', 'Piezas publicadas', 'Contenido de ejemplo — último mes'],
-    ['12.400', 'Alcance total', 'Contenido de ejemplo — suma de impresiones'],
-    ['4,8%', 'Engagement promedio', 'Contenido de ejemplo — sobre alcance'],
-  ]);
-  const piezas = [
-    { fecha:'28 ago 2026', canal:'Instagram', formato:'Carrusel', alcance:'3.100', engagement:'5,2%' },
-    { fecha:'21 ago 2026', canal:'WhatsApp', formato:'Encuesta', alcance:'1.800', engagement:'9,1%' },
-    { fecha:'14 ago 2026', canal:'Instagram', formato:'Reel', alcance:'4.600', engagement:'6,0%' },
-    { fecha:'07 ago 2026', canal:'Newsletter', formato:'Mail', alcance:'2.900', engagement:'2,3%' },
-  ];
-  const rows = piezas.map(p => `<tr><td style="color:var(--text-faint); white-space:nowrap">${p.fecha}</td><td>${p.canal}</td><td>${p.formato}</td><td class="mono">${p.alcance}</td><td class="mono">${p.engagement}</td></tr>`).join('');
-  return kpis +
-    `<div class="card"><h3>Piezas recientes</h3><div class="sub">Contenido de ejemplo — todavía no está conectado a una fuente real (el esquema hoy no modela piezas publicadas ni distribución de contenido). Sirve para revisar el diseño de la vista.</div>
-    <div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Canal</th><th>Formato</th><th>Alcance</th><th>Engagement</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
-}
+// renderConocimiento()/renderVoz() se removieron en el pivot 2026-09-23 —
+// esa superficie la construye otro sector de Taquion. Ver
+// specs/2026-09-23-pivot-leads-whatsapp.md.
 
 async function loadActivaciones(comunidadId){
   const { data, error } = await supabase
@@ -515,6 +479,7 @@ async function loadActivaciones(comunidadId){
 
 const ACTIVACION_TIPO_LABEL = { sponsor_anunciante:'Sponsor / anunciante', marca_contratante:'Marca contratante' };
 const ACTIVACION_ESTADO_LABEL = { planificada:'Planificada', en_curso:'En curso', cerrada:'Cerrada', cancelada:'Cancelada' };
+const ACTIVACION_FORMATO_LABEL = { entrevista_indagatoria:'Entrevista indagatoria', promocion:'Promoción', anuncio_lanzamiento:'Anuncio de lanzamiento' };
 
 function fmtKpiJson(v){
   if (!v) return '—';
@@ -530,13 +495,36 @@ function renderActivaciones(activaciones){
       <td style="color:var(--text-faint); white-space:nowrap">${a.fecha_inicio || '—'}${a.fecha_fin ? ' → '+a.fecha_fin : ''}</td>
       <td>${a.nombre}</td>
       <td>${ACTIVACION_TIPO_LABEL[a.tipo] || a.tipo}</td>
+      <td>${a.formato_operativo ? (ACTIVACION_FORMATO_LABEL[a.formato_operativo] || a.formato_operativo) : '—'}</td>
       <td>${ACTIVACION_ESTADO_LABEL[a.estado] || a.estado}</td>
       <td>${a.responsable || '—'}</td>
       <td class="mono" style="font-size:12px">${fmtKpiJson(a.kpi_objetivo)}</td>
       <td class="mono" style="font-size:12px">${fmtKpiJson(a.kpi_resultado)}</td>
+      <td>${a.estado === 'en_curso'
+        ? `<button class="btn-disparar-wsp" data-id="${a.id}" style="background:var(--panel-raised); border:1px solid var(--border-strong); color:#fff; font-size:11.5px; font-weight:700; padding:6px 10px; border-radius:var(--r-in); cursor:pointer; white-space:nowrap">Disparar por WhatsApp</button>`
+        : `<span style="color:var(--text-faint); font-size:11.5px">—</span>`}</td>
     </tr>`).join('');
-  return `<div class="card"><h3>Activaciones</h3><div class="sub">Datos reales de <code>crm_comunidades.activacion</code>, deliberadamente separados de Crecimiento (no toca <code>contacto</code>/<code>evento_journey</code>).</div>
-    <div class="tbl-wrap"><table><thead><tr><th>Fechas</th><th>Nombre</th><th>Tipo</th><th>Estado</th><th>Responsable</th><th>KPI objetivo</th><th>KPI resultado</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  return `<div class="card"><h3>Activaciones</h3><div class="sub">Datos reales de <code>crm_comunidades.activacion</code>, deliberadamente separados de Crecimiento (no toca <code>contacto</code>/<code>evento_journey</code>). El disparo por WhatsApp aplica un tag vía ManyChat a los contactos ya vinculados (<code>contacto.manychat_subscriber_id</code>) — nunca envía contenido libre, ver <code>specs/2026-09-23-pivot-leads-whatsapp.md</code>.</div>
+    <div class="tbl-wrap"><table><thead><tr><th>Fechas</th><th>Nombre</th><th>Tipo</th><th>Formato</th><th>Estado</th><th>Responsable</th><th>KPI objetivo</th><th>KPI resultado</th><th>WhatsApp</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div id="disparoResultado" style="margin-top:12px"></div></div>`;
+}
+
+async function dispararActivacionWhatsApp(activacionId, btn){
+  const resultadoEl = document.getElementById('disparoResultado');
+  const original = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Disparando…';
+  try {
+    const { data, error } = await supabase.functions.invoke('activacion-manychat', { body: { activacion_id: activacionId } });
+    if (error) throw error;
+    const d = data?.data;
+    const estado = d?.estado || 'error';
+    const color = estado==='ok' ? 'var(--tq-fucsia)' : estado==='parcial' ? 'var(--tq-naranja)' : 'var(--tq-naranja)';
+    resultadoEl.innerHTML = `<div class="sub" style="margin-bottom:0; color:${color}">Disparo ${estado} — ${d?.cantidad_contactos ?? 0} contacto(s) con <code>manychat_subscriber_id</code>. Tag: <code>${d?.tag_manychat ?? '—'}</code>.</div>`;
+  } catch (err) {
+    resultadoEl.innerHTML = `<div class="sub" style="margin-bottom:0; color:var(--tq-naranja)">No se pudo disparar: ${err.message || err}. Revisá que la Edge Function esté deployada y el secret MANYCHAT_API_KEY cargado (ver README).</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = original;
+  }
 }
 
 function renderDecisiones(c){
@@ -645,7 +633,39 @@ function renderExport(role, comunidadId, comunidadNombre){
   <div class="card"><h3>Audit log</h3><div class="sub" style="margin-bottom:0">Tabla <code>exportacion_log</code> ya existe en el esquema — el registro automático desde este botón todavía no está conectado (Nivel 1 no lo requiere; Nivel 2/3 sí, y no están construidos).</div></div>`;
 }
 
-function renderOverview(metricas, barrios, arquetipos){
+function renderPipeline(contactos, role){
+  const porEstado = Object.fromEntries(ESTADO_ORDEN.map(k => [k, []]));
+  (contactos||[]).forEach(c => { (porEstado[c.estado_identificacion] || (porEstado[c.estado_identificacion]=[])).push(c); });
+
+  const columnas = ESTADO_ORDEN.map(k => {
+    const items = porEstado[k] || [];
+    const cards = items.length
+      ? items.map(c => {
+          const arqOInteres = c.arquetipo?.nombre || c.interes_declarado || '—';
+          return `<div style="background:var(--panel-raised); border:1px solid var(--border); border-radius:var(--r-in); padding:10px 11px; margin-bottom:8px">
+            <div style="font-size:12.5px; font-weight:700; color:#fff; margin-bottom:4px">${contactName(c, role)}</div>
+            <div style="font-size:11px; color:var(--text-muted)">${arqOInteres}${c.corredor_localidad ? ' · '+c.corredor_localidad : ''}</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px">
+              <span class="mono" style="font-size:11px; color:var(--text-faint)">Nivel ${c.nivel_activacion ?? '—'}/5</span>
+              <span style="font-size:10.5px; color:var(--text-faint)">${relTime(c.updated_at)}</span>
+            </div>
+          </div>`;
+        }).join('')
+      : `<div style="font-size:11px; color:var(--text-faint); padding:8px 0">Sin leads acá todavía</div>`;
+    return `<div style="flex:none; width:220px; display:flex; flex-direction:column">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 2px; border-bottom:2px solid var(--border-strong); margin-bottom:10px">
+        <span class="pill ${stateClass(k)}">${ESTADO_LABEL[k]}</span>
+        <span class="mono" style="font-size:12px; color:var(--text-muted); font-weight:700">${items.length}</span>
+      </div>
+      <div style="max-height:420px; overflow-y:auto">${cards}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="card"><h3>Pipeline de leads</h3><div class="sub">Los mismos ${(contactos||[]).length} contactos de <code>contacto.estado_identificacion</code>, organizados como pipeline en vez de barra de funnel — un lead avanza de columna a la derecha, nunca hay dos bases separadas.</div>
+    <div class="tbl-wrap"><div style="display:flex; gap:12px; padding-bottom:4px">${columnas}</div></div></div>`;
+}
+
+function renderOverview(metricas, barrios, arquetipos, contactos, role){
   const total = metricas?.total_contactos ?? 0;
   const pct = v => v==null ? '—' : (Math.round(v*1000)/10) + '%';
 
@@ -666,6 +686,7 @@ function renderOverview(metricas, barrios, arquetipos){
   const necesitaNota = (metricas?.tasa_referidos === 0 || metricas?.tasa_abandono === 0);
 
   return kpis +
+    renderPipeline(contactos, role) +
     `<div class="card"><h3>Por barrio / corredor</h3><div class="sub">Distribución real de <code>contacto.corredor_localidad</code> (vista <code>overview_por_barrio</code>).</div>${barRows(barrios, 'corredor_localidad')}</div>` +
     `<div class="card"><h3>Por arquetipo</h3><div class="sub">Distribución real de arquetipo asignado, o interés declarado si la comunidad no usa arquetipos (vista <code>overview_por_arquetipo</code>).</div>${barRows(arquetipos, 'arquetipo')}</div>` +
     (necesitaNota
@@ -683,7 +704,7 @@ function populateSidebar(){
     state.comunidad = e.target.value;
     const c = state.comunidades.get(state.comunidad);
     const esVistaFija = state.activo === '__overview' || state.activo === '__export';
-    if(!esVistaFija && !c.enabled[state.activo]) state.activo='conocimiento';
+    if(!esVistaFija && !c.enabled[state.activo]) state.activo='__overview';
     renderAll();
   };
   document.getElementById('selRole').onchange = e=>{ state.role = e.target.value; renderAll(); };
@@ -739,15 +760,16 @@ async function renderAll(){
 
   if(state.activo === '__overview'){
     title.textContent = 'Overview';
-    sub.textContent = `${c.nombre_interno} (${c.cliente||'—'}) · barrio, arquetipos y métricas de performance`;
+    sub.textContent = `${c.nombre_interno} (${c.cliente||'—'}) · pipeline de leads, barrio, arquetipos y métricas de performance`;
     content.innerHTML = '<div class="card"><h3>Cargando…</h3></div>';
     try {
-      const [metricas, barrios, arquetipos] = await Promise.all([
+      const [metricas, barrios, arquetipos, contactos] = await Promise.all([
         loadComunidadMetricas(state.comunidad),
         loadOverviewBarrios(state.comunidad),
         loadOverviewArquetipos(state.comunidad),
+        loadContactos(state.comunidad),
       ]);
-      content.innerHTML = renderOverview(metricas, barrios, arquetipos);
+      content.innerHTML = renderOverview(metricas, barrios, arquetipos, contactos, state.role);
     } catch (err) {
       content.innerHTML = `<div class="card"><h3>Error consultando Supabase</h3><div class="sub" style="margin-bottom:0; color:var(--tq-naranja)">${err.message}</div></div>`;
     }
@@ -761,7 +783,7 @@ async function renderAll(){
     return;
   }
 
-  title.textContent = state.activo === 'conocimiento' ? 'Overview - Conocimiento' : ACTIVO_LABEL[state.activo];
+  title.textContent = ACTIVO_LABEL[state.activo];
   sub.textContent = `${c.nombre_interno} (${c.cliente||'—'}) · ${ACTIVO_SUB[state.activo]}`;
 
   if(!c.enabled[state.activo]){
@@ -774,14 +796,17 @@ async function renderAll(){
 
   content.innerHTML = '<div class="card"><h3>Cargando…</h3></div>';
   try {
-    if (state.activo === 'conocimiento') content.innerHTML = renderConocimiento(c);
-    else if (state.activo === 'voz') content.innerHTML = renderVoz(c);
-    else if (state.activo === 'crecimiento') content.innerHTML = renderCrecimiento(await loadFunnel(state.comunidad));
+    if (state.activo === 'crecimiento') content.innerHTML = renderCrecimiento(await loadFunnel(state.comunidad));
     else if (state.activo === 'relacion') {
       const [contactos, mapaVoces] = await Promise.all([loadContactos(state.comunidad), loadMapaVoces(state.comunidad)]);
       content.innerHTML = renderRelacion(contactos, mapaVoces, state.role);
     }
-    else if (state.activo === 'activaciones') content.innerHTML = renderActivaciones(await loadActivaciones(state.comunidad));
+    else if (state.activo === 'activaciones') {
+      content.innerHTML = renderActivaciones(await loadActivaciones(state.comunidad));
+      content.querySelectorAll('.btn-disparar-wsp').forEach(btn => {
+        btn.onclick = () => dispararActivacionWhatsApp(btn.dataset.id, btn);
+      });
+    }
     else if (state.activo === 'decisiones') content.innerHTML = renderDecisiones(c);
   } catch (err) {
     content.innerHTML = `<div class="card"><h3>Error consultando Supabase</h3><div class="sub" style="margin-bottom:0; color:var(--tq-naranja)">${err.message}</div></div>`;
