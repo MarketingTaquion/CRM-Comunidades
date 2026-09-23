@@ -176,6 +176,21 @@ Audit log de cada intento de disparo hacia ManyChat/WhatsApp para una activació
 
 Sin ninguna FK hacia `contacto` ni `evento_journey` — deliberado, ver [Modelo de identificación y gobernanza de exportación](../explanation/modelo-de-identificacion-y-gobernanza-de-exportacion.md#activaciones-activo-5-por-qué-no-toca-crecimiento).
 
+### `trato`
+Pipeline de oportunidades (deals) en Overview, independiente de `estado_identificacion`. Definida en [`db/007_tratos.sql`](../../db/007_tratos.sql).
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | uuid, PK | |
+| `comunidad_id` | uuid, FK → `comunidad.id` on delete cascade | |
+| `contacto_id` | uuid, FK → `contacto.id`, nullable, on delete set null | Un trato puede existir sin contacto puntual asociado todavía |
+| `activacion_id` | uuid, FK → `activacion.id`, nullable, on delete set null | Un trato puede nacer de una activación |
+| `nombre` | text, not null | |
+| `estado` | text, default `nuevo` | `nuevo` \| `contactado` \| `en_proceso` \| `ganado` \| `perdido` |
+| `created_at` / `updated_at` | timestamptz | |
+
+Por qué es una tabla propia y no una columna en `contacto`: un trato es una decisión manual del equipo (arrastrarlo de columna en columna es exactamente el punto), mientras que `estado_identificacion` solo avanza por criterios reales y nunca se fuerza a mano — mezclar los dos rompería esa regla (ver [Modelo de identificación y gobernanza de exportación](../explanation/modelo-de-identificacion-y-gobernanza-de-exportacion.md)).
+
 ### `temporada`
 Fechas de cada temporada por comunidad — `comunidad.temporada_numero`/`fecha_inicio_temporada` solo guardan la actual, esta tabla guarda el historial. Definida en [`db/004_informe_decision_insumo.sql`](../../db/004_informe_decision_insumo.sql).
 

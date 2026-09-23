@@ -665,7 +665,108 @@ function renderPipeline(contactos, role){
     <div class="tbl-wrap"><div style="display:flex; gap:12px; padding-bottom:4px">${columnas}</div></div></div>`;
 }
 
-function renderOverview(metricas, barrios, arquetipos, contactos, role){
+/* ---------- Tratos (deals) — pipeline propio, separado de estado_identificacion ---------- */
+async function loadTratos(comunidadId){
+  const { data, error } = await supabase
+    .from('trato')
+    .select('id, nombre, estado, updated_at, contacto:contacto_id(nombre_declarado, estado_identificacion), activacion:activacion_id(nombre)')
+    .eq('comunidad_id', comunidadId)
+    .order('created_at', { ascending:true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function crearTrato(comunidadId, nombre, estado){
+  const { error } = await supabase.from('trato').insert({ comunidad_id: comunidadId, nombre, estado });
+  if (error) throw error;
+}
+
+async function moverTrato(tratoId, estado){
+  const { error } = await supabase.from('trato').update({ estado }).eq('id', tratoId);
+  if (error) throw error;
+}
+
+const TRATO_ESTADO_ORDEN = ['nuevo','contactado','en_proceso','ganado','perdido'];
+const TRATO_ESTADO_LABEL = { nuevo:'Nuevo', contactado:'Contactado', en_proceso:'En proceso', ganado:'Ganado', perdido:'Perdido' };
+
+function renderTratos(tratos, role){
+  const porEstado = Object.fromEntries(TRATO_ESTADO_ORDEN.map(k => [k, []]));
+  (tratos||[]).forEach(t => { (porEstado[t.estado] || (porEstado[t.estado]=[])).push(t); });
+
+  const columnas = TRATO_ESTADO_ORDEN.map(estado => {
+    const items = porEstado[estado] || [];
+    const cards = items.map(t => `
+      <div class="trato-card" draggable="true" data-trato-id="${t.id}" style="background:var(--panel-raised); border:1px solid var(--border-strong); border-radius:var(--r-in); padding:10px 11px; margin-bottom:8px; cursor:grab">
+        <div style="font-size:12.5px; font-weight:700; color:#fff; margin-bottom:4px">${t.nombre}</div>
+        ${t.contacto ? `<div style="font-size:11px; color:var(--text-muted)">${contactName(t.contacto, role)}</div>` : ''}
+        ${t.activacion ? `<div style="font-size:11px; color:var(--text-faint)">Activación: ${t.activacion.nombre}</div>` : ''}
+        <div style="font-size:10.5px; color:var(--text-faint); margin-top:6px">${relTime(t.updated_at)}</div>
+      </div>`).join('');
+    return `<div style="flex:none; width:220px; display:flex; flex-direction:column">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 2px; border-bottom:2px solid var(--border-strong); margin-bottom:10px">
+        <span style="font-size:12px; font-weight:700; color:#fff; text-transform:uppercase; letter-spacing:.03em">${TRATO_ESTADO_LABEL[estado]}</span>
+        <span class="mono" style="font-size:12px; color:var(--text-muted); font-weight:700">${items.length}</span>
+      </div>
+      <div class="trato-dropzone" data-estado="${estado}" style="min-height:70px; max-height:340px; overflow-y:auto; border-radius:var(--r-in)">${cards}</div>
+      <form class="trato-add-form" data-estado="${estado}" style="margin-top:8px">
+        <input type="text" placeholder="+ Nuevo trato" style="width:100%; background:var(--panel-sunken); border:1px solid var(--border); color:#fff; font-size:11.5px; padding:7px 9px; border-radius:var(--r-in)">
+      </form>
+    </div>`;
+  }).join('');
+
+  return `<div class="card" id="tratosPipelineWrap"><h3>Pipeline de tratos</h3><div class="sub">Oportunidades propias (<code>trato</code>), separadas de <code>estado_identificacion</code> — arrastrá una tarjeta para cambiarla de etapa, o escribí en "+ Nuevo trato" y Enter para cargar una.</div>
+    <div class="tbl-wrap"><div style="display:flex; gap:12px; padding-bottom:4px">${columnas}</div></div></div>`;
+}
+
+function wireTratos(role){
+  const wrap = document.getElementById('tratosPipelineWrap');
+  if (!wrap) return;
+
+  wrap.querySelectorAll('.trato-card').forEach(card => {
+    card.ondragstart = (e) => { e.dataTransfer.setData('text/plain', card.dataset.tratoId); };
+  });
+
+  wrap.querySelectorAll('.trato-dropzone').forEach(zone => {
+    zone.ondragover = (e) => { e.preventDefault(); };
+    zone.ondrop = async (e) => {
+      e.preventDefault();
+      const tratoId = e.dataTransfer.getData('text/plain');
+      const nuevoEstado = zone.dataset.estado;
+      if (!tratoId) return;
+      try {
+        await moverTrato(tratoId, nuevoEstado);
+        await refrescarTratos(role);
+      } catch (err) {
+        alert('No se pudo mover el trato: ' + (err.message || err));
+      }
+    };
+  });
+
+  wrap.querySelectorAll('.trato-add-form').forEach(form => {
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const input = form.querySelector('input');
+      const nombre = input.value.trim();
+      if (!nombre) return;
+      try {
+        await crearTrato(state.comunidad, nombre, form.dataset.estado);
+        await refrescarTratos(role);
+      } catch (err) {
+        alert('No se pudo crear el trato: ' + (err.message || err));
+      }
+    };
+  });
+}
+
+async function refrescarTratos(role){
+  const tratos = await loadTratos(state.comunidad);
+  const wrap = document.getElementById('tratosPipelineWrap');
+  if (!wrap) return;
+  wrap.outerHTML = renderTratos(tratos, role);
+  wireTratos(role);
+}
+
+function renderOverview(metricas, barrios, arquetipos, contactos, role, tratos){
   const total = metricas?.total_contactos ?? 0;
   const pct = v => v==null ? '—' : (Math.round(v*1000)/10) + '%';
 
@@ -687,6 +788,7 @@ function renderOverview(metricas, barrios, arquetipos, contactos, role){
 
   return kpis +
     renderPipeline(contactos, role) +
+    renderTratos(tratos, role) +
     `<div class="card"><h3>Por barrio / corredor</h3><div class="sub">Distribución real de <code>contacto.corredor_localidad</code> (vista <code>overview_por_barrio</code>).</div>${barRows(barrios, 'corredor_localidad')}</div>` +
     `<div class="card"><h3>Por arquetipo</h3><div class="sub">Distribución real de arquetipo asignado, o interés declarado si la comunidad no usa arquetipos (vista <code>overview_por_arquetipo</code>).</div>${barRows(arquetipos, 'arquetipo')}</div>` +
     (necesitaNota
@@ -763,13 +865,15 @@ async function renderAll(){
     sub.textContent = `${c.nombre_interno} (${c.cliente||'—'}) · pipeline de leads, barrio, arquetipos y métricas de performance`;
     content.innerHTML = '<div class="card"><h3>Cargando…</h3></div>';
     try {
-      const [metricas, barrios, arquetipos, contactos] = await Promise.all([
+      const [metricas, barrios, arquetipos, contactos, tratos] = await Promise.all([
         loadComunidadMetricas(state.comunidad),
         loadOverviewBarrios(state.comunidad),
         loadOverviewArquetipos(state.comunidad),
         loadContactos(state.comunidad),
+        loadTratos(state.comunidad),
       ]);
-      content.innerHTML = renderOverview(metricas, barrios, arquetipos, contactos, state.role);
+      content.innerHTML = renderOverview(metricas, barrios, arquetipos, contactos, state.role, tratos);
+      wireTratos(state.role);
     } catch (err) {
       content.innerHTML = `<div class="card"><h3>Error consultando Supabase</h3><div class="sub" style="margin-bottom:0; color:var(--tq-naranja)">${err.message}</div></div>`;
     }
