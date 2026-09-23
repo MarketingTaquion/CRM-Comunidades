@@ -2,6 +2,8 @@
 
 Panel interno de Taquión para el producto "Comunidades" — un sistema de registro único de comunidades, contactos y su nivel de identificación, reemplazando el patrón actual de planillas sueltas + ManyChat.
 
+**Pivot de producto (2026-09-23):** el foco pasa a **tratamiento de leads a nivel operacional** (no "loyalty"/comunidad completa) — Overview (el embudo de identificación) y Activaciones (acciones nativas de WhatsApp: entrevistas indagatorias, promociones, anuncios de lanzamiento) son las dos secciones centrales. Conocimiento y Voz salen del panel — esa superficie la construye otro sector de Taquión (Insights/Inspire). Detalle completo en [`specs/2026-09-23-pivot-leads-whatsapp.md`](specs/2026-09-23-pivot-leads-whatsapp.md).
+
 Este repo es el proyecto real (código deployable), hermano de [`pulso-ignite`](https://github.com/MarketingTaquion/Dashboard-Consumos-Ignite) e [`ignite-brief`](https://github.com/MarketingTaquion/Brief-Campana-Ignite). La spec y todo el research que originó este producto vive en `SDD-TAQUION/specs/006-crm-comunidades.md`, en el workspace local de planificación (no es un repo de GitHub) — ese documento es donde se decide qué construir; este repo es donde se construye.
 
 ## Estado actual (2026-09-18)
@@ -21,11 +23,12 @@ Guías de uso, referencia técnica y el porqué de las decisiones de arquitectur
 
 ## Qué falta (backlog activo)
 
+0. **Deployar el gateway de la API pública** (`supabase functions deploy api-publica`) y correr `db/005_api_publica.sql` contra el proyecto real — el código ya está escrito (2026-09-19, ver sección abajo) pero todavía no se aplicó ni se probó contra Supabase de verdad.
 1. El webhook de ManyChat → esta base (hoy ManyChat solo escribe a Google Sheets) — auditado 2026-09-18, confirmado que no existe todavía (ni webhook ni importación real), ver [Ingesta de datos: por qué el circuito UTM/ManyChat todavía no existe](docs/explanation/ingesta-de-datos-y-circuito-utm.md).
 2. El job que recalcula `nivel_activacion` y `semanas_consecutivas_activo` semanalmente.
 3. Los endpoints que arman los exports de Nivel 2/3 (Nivel 1 ya funciona), escribiendo en `exportacion_log`.
 4. Login real y RLS activo para los roles `am_estratega`/`cliente` (hoy solo `admin_taquion` tiene login).
-5. Disparo de campañas del CRM hacia ManyChat (aplicar tag a un segmento para el activo Activaciones) — investigado y especificado (ver spec de UTM/ManyChat arriba), no construido: requiere backend/serverless nuevo, rompe el patrón 100% estático actual.
+5. Disparo de campañas del CRM hacia ManyChat (aplicar tag a un segmento para el activo Activaciones) — código escrito en el pivot 2026-09-23 (`db/006_activaciones_whatsapp.sql` + `supabase/functions/activacion-manychat/`), rompe el patrón 100% estático a propósito. Falta: deployar la función, cargar la API key de ManyChat como secret, y poblar `contacto.manychat_subscriber_id` de al menos un contacto real para poder probarlo de punta a punta.
 6. Cargar la primera fila de `temporada` (fecha real de inicio) por comunidad — sin eso, `informe_decision_insumo` devuelve 0 filas (ver Esquema de base de datos).
 
 ## Deploy
@@ -37,7 +40,8 @@ Guías de uso, referencia técnica y el porqué de las decisiones de arquitectur
 - **Login real:** Supabase Auth, email/password. Un solo usuario admin creado por invitación (`marketing@taquion.com.ar`) y vinculado a `admin_taquion` en `usuario_comunidad`. Sin esto, las consultas hubieran vuelto vacías siempre — RLS ya exige `auth.uid()` real.
 - **Requisitos de Supabase que no son obvios y hay que recordar si se resetea el proyecto:** exponer el schema en Data API y aplicar los GRANTs de schema/tabla — ninguno de los dos pasos es automático para un schema propio. Detalle completo en [Seguridad: RLS, GRANTs y visibilidad de Netlify](docs/explanation/seguridad-rls-grants-y-netlify.md).
 - **Conectado con datos reales:** comunidades (`comunidad` + `comunidad_activo`), funnel de Crecimiento (agregado real de `contacto.estado_identificacion`), tabla de Relación (`contacto` + join a `arquetipo`), Mapa de Voces (vista `mapa_de_voces`), export Nivel 1 (CSV real desde `export_nivel1_agregado`), Activaciones (tabla real `activacion`, ver abajo).
-- **Contenido de ejemplo (no conectado a una fuente real):** Conocimiento y Voz (sentiment, piezas publicadas, brecha semántica), los KPIs CPME/CPMR/TRG/K-Factor de Crecimiento, y la bitácora de Decisiones — no hay tabla que los respalde todavía (Decisiones sí tiene ya `informe_decision`/`informe_decision_insumo` construidos, ver abajo, pero la UI todavía muestra la bitácora de ejemplo, no está cableada). Muestran contenido hardcodeado marcado explícitamente como "Contenido de ejemplo" en vez de fabricar un número real (ver [Modelo de identificación y gobernanza de exportación](docs/explanation/modelo-de-identificacion-y-gobernanza-de-exportacion.md)). Export Nivel 2/3 — botones deshabilitados, sin endpoint construido.
+- **Contenido de ejemplo (no conectado a una fuente real):** los KPIs CPME/CPMR/TRG/K-Factor de Crecimiento, y la bitácora de Decisiones — no hay tabla que los respalde todavía (Decisiones sí tiene ya `informe_decision`/`informe_decision_insumo` construidos, ver abajo, pero la UI todavía muestra la bitácora de ejemplo, no está cableada). Muestran contenido hardcodeado marcado explícitamente como "Contenido de ejemplo" en vez de fabricar un número real (ver [Modelo de identificación y gobernanza de exportación](docs/explanation/modelo-de-identificacion-y-gobernanza-de-exportacion.md)). Export Nivel 2/3 — botones deshabilitados, sin endpoint construido.
+- **Fuera del panel desde el pivot 2026-09-23:** Conocimiento y Voz — el enum `activo_tipo` los conserva a nivel de base (otro sector puede seguir usándolos), pero ya no se navegan desde acá. Pendiente de auditoría futura evaluar si se eliminan del enum — ver [`specs/2026-09-23-pivot-leads-whatsapp.md`](specs/2026-09-23-pivot-leads-whatsapp.md).
 - Datos semilla cargados: las 2 comunidades piloto/demo (Todo un País, Cortado en Jarrito) con sus activos habilitados según etapa, arquetipos de Cortado en Jarrito (con la exclusión C2/C3 explícita), y un puñado de contactos de ejemplo por comunidad para que Crecimiento/Relación/Mapa de Voces no arranquen en cero. ("Un Metro Cuadrado" era el nombre viejo de Cortado en Jarrito, cargado por error como comunidad aparte — se eliminó el 2026-09-17.)
 
 ## Overview y métricas de performance (2026-09-17)
@@ -51,3 +55,16 @@ Pestaña nueva `Overview` (landing por default al loguearse): desglose real por 
 - Specs cortas de ambas tareas (más la auditoría del circuito UTM/ManyChat) en [`specs/`](specs/).
 
 Próximos frentes acordados (en este orden): API pública (exponiendo la REST API de Supabase con API keys propias) y sección de Reportes (manuales + programación de automáticos, disponibles en el panel).
+
+## API pública — Fase 1 (2026-09-19, código escrito, deploy pendiente)
+
+- **Alcance:** solo lectura, solo Nivel 1 — `comunidad(id, etapa)` y `export_nivel1_agregado`. Nunca `contacto` ni `mapa_de_voces`, sin importar la key usada. Detalle de la decisión de arquitectura (por qué Edge Function y no un rol Postgres directo) en [`specs/2026-09-19-api-publica.md`](specs/2026-09-19-api-publica.md).
+- **Qué se escribió:** [`db/005_api_publica.sql`](db/005_api_publica.sql) — tabla `crm_comunidades.api_key` (solo hash, nunca texto plano) y las funciones `generar_api_key`/`revocar_api_key`/`validar_api_key`; [`supabase/functions/api-publica/index.ts`](supabase/functions/api-publica/index.ts) — el gateway que valida la key contra esas funciones y corre la query con `service_role` del lado del servidor.
+- **Cómo usarla una vez deployada:** [Generar y revocar una key de la API pública](docs/how-to/generar-y-revocar-api-key.md).
+- **Qué falta para que sea real:** correr `db/005` en el SQL Editor del proyecto (mismo patrón que `db/001`–`004`) y `supabase functions deploy api-publica` con la CLI logueada y el proyecto linkeado — ninguno de los dos pasos se ejecutó todavía contra Supabase real.
+
+## Pivot a tratamiento de leads + WhatsApp (2026-09-23)
+
+- **Qué cambió:** Conocimiento y Voz salen del panel — pasan a ser responsabilidad de otro sector de Taquión. El foco pasa a tratamiento de leads: Overview (embudo de `estado_identificacion` como pipeline, símil Pipedrive) y Activaciones (entrevistas indagatorias, promociones, anuncios de lanzamiento, disparadas nativamente por WhatsApp) son las dos secciones centrales. Detalle completo, incluidas las 4 decisiones de alcance, en [`specs/2026-09-23-pivot-leads-whatsapp.md`](specs/2026-09-23-pivot-leads-whatsapp.md).
+- **`activo_tipo` no se tocó:** Conocimiento/Voz se sacaron solo de la navegación del panel — el enum de Postgres y las filas de `comunidad_activo` siguen intactos. Queda pendiente para una futura auditoría interna del proyecto decidir si se eliminan del esquema.
+- **Disparo real hacia WhatsApp/ManyChat:** `db/006_activaciones_whatsapp.sql` (columna `activacion.formato_operativo`, `contacto.manychat_subscriber_id`, tabla `activacion_disparo`) + `supabase/functions/activacion-manychat/` — mismo patrón de Edge Function que `api-publica`. Sin deployar todavía; además depende de una API key real de ManyChat y de contactos con `manychat_subscriber_id` poblado, ninguna de las dos cosas existe aún.

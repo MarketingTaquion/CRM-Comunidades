@@ -9,7 +9,7 @@ Fuentes: `SDD-TAQUION/specs/006-crm-comunidades.md`, `SDD-TAQUION/docs/contexto-
 | Etapa | Qué recibo | Mis accionables | Qué entrego a otros equipos | Estado en el CRM hoy |
 |---|---|---|---|---|
 | **Detectar** | Research inicial de Insights (segmentación, encuesta, clustering) y datos crudos de captura (ManyChat/planillas) | Alta de la comunidad (`comunidad`) y su roster de arquetipos (`arquetipo`, exclusión siempre explícita); diseño de `estado_identificacion` para clasificar cada contacto desde el primer punto de contacto | El registro único de la comunidad —reemplaza la planilla suelta— con el roster de arquetipos listo para que Insights/AM lo validen y para que el resto de los activos trabajen sobre la misma base | `comunidad` + `arquetipo` + `estado_identificacion` construidos y aplicados (db/001); alta de comunidad ya documentada (how-to) |
-| **Entender + Diseñar** ("Estrategia de Destino", tope 2 meses) | Research cuali/cuanti y social listening de Insights; narrativa/naming de Inspire; North Star y límites del Blueprint definidos por AM+Estratega | Modelar los activos Conocimiento (temas, sentiment, brecha semántica) y Voz (piezas, alcance, engagement) en el panel, manteniendo separado lo real de lo de ejemplo mientras no exista fuente de listening real | El panel de Conocimiento/Voz como espacio único donde cliente y AM ven el diagnóstico consolidado, listo para conectar la fuente real cuando exista | Conocimiento y Voz en el panel con contenido de ejemplo marcado como tal explícitamente — sin tabla real de sentiment/piezas todavía |
+| **Entender + Diseñar** ("Estrategia de Destino", tope 2 meses) | Research cuali/cuanti y social listening de Insights; narrativa/naming de Inspire; North Star y límites del Blueprint definidos por AM+Estratega | *(fuera del alcance de este CRM desde 2026-09-23 — ver nota abajo)* | Nada: Conocimiento y Voz pasan a construirse fuera de este CRM | Conocimiento y Voz sacados del panel (pivot 2026-09-23, `specs/2026-09-23-pivot-leads-whatsapp.md`) — el enum `activo_tipo` los conserva a nivel de base, pendiente de auditoría futura |
 | **Activar** | Brief y objetivo de negocio de cada campaña (sponsor o marca contratante) de AM + Ignite | Tabla `activacion` propia (nombre, tipo, objetivo, brief, fechas, KPI objetivo/resultado, estado, responsable), separada de Crecimiento; spec de disparo de segmentos hacia ManyChat vía tag; landing pages con IA + CRO vía PostHog para cada campaña; activación de captación de audios de VOC vía email/push notification | A AM/Ignite un registro único por campaña con su propia medición, sin mezclar con el funnel de adquisición; landing pages de campaña con conversión optimizada; la activación que solicita los audios de VOC a los miembros por email o push | Tabla `activacion` aplicada y con RLS (db/003), panel ya lee de ahí (vacío hasta la primera carga real); landing pages con IA/CRO y canal de email/push — todavía no integrados al repo del CRM |
 | **Crecer** | Journey/adquisición vía ManyChat (hoy sin integrar, ver auditoría UTM) y nivel de activación cargado manualmente | Overview (barrio/arquetipo + engagement/abandono/referidos reales por comunidad), funnel de Crecimiento por `estado_identificacion`, Mapa de Voces (vista gobernada, nunca al cliente); auditoría del circuito UTM/ManyChat con evidencia real; sistema de VOC con captación de audios y embeddings para transcripción y búsqueda semántica | A AM/dirección un panel de performance por comunidad (nunca promediado entre comunidades) y el diagnóstico honesto de qué falta para la atribución de canal; a Insights un repositorio de voz de la comunidad transcripto y buscable | Overview + Crecimiento + Relación + Mapa de Voces reales y funcionando (db/002); circuito UTM auditado, documentado como pendiente (0% de contactos con UTM cargado); VOC — no construido todavía |
 | **Cierre de temporada** (transversal, Informe de Decisión Ejecutiva) | Lo cuantitativo ya instrumentado en Crecimiento/Relación al momento del cierre | Vista automática `informe_decision_insumo` (foto acumulada al cierre + actividad de la temporada) y tabla `informe_decision` para que Insights/liderazgo escriban semáforo, aprendizajes y plan de acción a mano | A liderazgo/Insights el insumo numérico listo para el informe, sin fabricar el análisis cualitativo que les corresponde escribir a ellos | `temporada` + `informe_decision` + `informe_decision_insumo` aplicados (db/004); arranca vacío hasta cargar la primera fecha real de temporada |
@@ -23,9 +23,10 @@ Fuentes: `SDD-TAQUION/specs/006-crm-comunidades.md`, `SDD-TAQUION/docs/contexto-
 - Insumo automático + informe escrito a mano para el cierre de temporada (db/004)
 - Auditoría del circuito UTM/ManyChat, documentada con evidencia real
 
-### Fase 1 — API pública · **Próximo**
+### Fase 1 — API pública · **En progreso (2026-09-19)**
 - Exponer la REST API de Supabase con API keys propias
 - Definir qué tablas/vistas salen hacia afuera y qué puede entrar desde otras herramientas
+- Spec de alcance y decisión de arquitectura escritas (`specs/2026-09-19-api-publica.md`); `db/005_api_publica.sql` (tabla `api_key` + funciones) y el gateway (`supabase/functions/api-publica/`) ya escritos — deploy contra Supabase real pendiente (ver README, "Qué falta")
 
 ### Fase 2 — Reportes · **Próximo**
 - Reportes manuales cargados por evento
@@ -35,10 +36,10 @@ Fuentes: `SDD-TAQUION/specs/006-crm-comunidades.md`, `SDD-TAQUION/docs/contexto-
 - Webhook o importación real ManyChat → CRM (hoy 0% de contactos con UTM cargado)
 - Job semanal de recálculo de `nivel_activacion` / `semanas_consecutivas_activo`
 
-### Fase 4 — Activaciones avanzadas · Planeado
-- Disparo de segmentos hacia ManyChat vía tag (spec lista en `2026-09-18-utm-manychat-y-disparo-campanas.md`, requiere backend nuevo)
-- Landing pages con IA + CRO vía PostHog (experiments, feature flags, session replay) para cada campaña puntual
-- Activación de captación de audios de VOC por email/push notification
+### Fase 4 — Activaciones avanzadas · **En progreso (2026-09-23)**
+- Disparo de segmentos hacia ManyChat vía tag — código escrito en el pivot `pivot/leads-whatsapp` (`db/006_activaciones_whatsapp.sql` + `supabase/functions/activacion-manychat/`), deploy y prueba end-to-end pendientes de una API key real de ManyChat y de contactos con `manychat_subscriber_id` poblado
+- `activacion.formato_operativo` (entrevista indagatoria / promoción / anuncio de lanzamiento) como nueva clasificación, sin reemplazar `tipo`
+- Landing pages con IA + CRO vía PostHog y activación de captación de audios de VOC por email/push — quedan planeadas, sin cambios en este pivot
 
 ### Fase 5 — VOC (Voice of Customer) · Planeado
 - Pipeline de audio → transcripción → embeddings → búsqueda semántica
@@ -53,3 +54,4 @@ Fuentes: `SDD-TAQUION/specs/006-crm-comunidades.md`, `SDD-TAQUION/docs/contexto-
 - El orden Fase 1 → Fase 2 (API pública antes que Reportes) fue confirmado explícitamente antes de este roadmap.
 - Fases 3 a 6 están mapeadas pero sin orden relativo confirmado todavía — se prioriza cuando corresponda.
 - Este documento no reemplaza los specs de tarea puntual (`2026-09-18-activaciones-tabla.md`, `2026-09-18-informe-decision-insumo.md`, `2026-09-18-utm-manychat-y-disparo-campanas.md`) — los referencia.
+- **Pivot 2026-09-23:** Conocimiento y Voz salen del panel de este CRM (otro sector de Taquión los construye) — ver `specs/2026-09-23-pivot-leads-whatsapp.md` para el detalle completo y el pendiente de auditoría sobre `activo_tipo`.
