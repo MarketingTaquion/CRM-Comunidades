@@ -479,6 +479,7 @@ async function loadActivaciones(comunidadId){
 
 const ACTIVACION_TIPO_LABEL = { sponsor_anunciante:'Sponsor / anunciante', marca_contratante:'Marca contratante' };
 const ACTIVACION_ESTADO_LABEL = { planificada:'Planificada', en_curso:'En curso', cerrada:'Cerrada', cancelada:'Cancelada' };
+const ACTIVACION_FORMATO_LABEL = { entrevista_indagatoria:'Entrevista indagatoria', promocion:'Promoción', anuncio_lanzamiento:'Anuncio de lanzamiento' };
 
 function fmtKpiJson(v){
   if (!v) return '—';
@@ -494,13 +495,36 @@ function renderActivaciones(activaciones){
       <td style="color:var(--text-faint); white-space:nowrap">${a.fecha_inicio || '—'}${a.fecha_fin ? ' → '+a.fecha_fin : ''}</td>
       <td>${a.nombre}</td>
       <td>${ACTIVACION_TIPO_LABEL[a.tipo] || a.tipo}</td>
+      <td>${a.formato_operativo ? (ACTIVACION_FORMATO_LABEL[a.formato_operativo] || a.formato_operativo) : '—'}</td>
       <td>${ACTIVACION_ESTADO_LABEL[a.estado] || a.estado}</td>
       <td>${a.responsable || '—'}</td>
       <td class="mono" style="font-size:12px">${fmtKpiJson(a.kpi_objetivo)}</td>
       <td class="mono" style="font-size:12px">${fmtKpiJson(a.kpi_resultado)}</td>
+      <td>${a.estado === 'en_curso'
+        ? `<button class="btn-disparar-wsp" data-id="${a.id}" style="background:var(--panel-raised); border:1px solid var(--border-strong); color:#fff; font-size:11.5px; font-weight:700; padding:6px 10px; border-radius:var(--r-in); cursor:pointer; white-space:nowrap">Disparar por WhatsApp</button>`
+        : `<span style="color:var(--text-faint); font-size:11.5px">—</span>`}</td>
     </tr>`).join('');
-  return `<div class="card"><h3>Activaciones</h3><div class="sub">Datos reales de <code>crm_comunidades.activacion</code>, deliberadamente separados de Crecimiento (no toca <code>contacto</code>/<code>evento_journey</code>).</div>
-    <div class="tbl-wrap"><table><thead><tr><th>Fechas</th><th>Nombre</th><th>Tipo</th><th>Estado</th><th>Responsable</th><th>KPI objetivo</th><th>KPI resultado</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  return `<div class="card"><h3>Activaciones</h3><div class="sub">Datos reales de <code>crm_comunidades.activacion</code>, deliberadamente separados de Crecimiento (no toca <code>contacto</code>/<code>evento_journey</code>). El disparo por WhatsApp aplica un tag vía ManyChat a los contactos ya vinculados (<code>contacto.manychat_subscriber_id</code>) — nunca envía contenido libre, ver <code>specs/2026-09-23-pivot-leads-whatsapp.md</code>.</div>
+    <div class="tbl-wrap"><table><thead><tr><th>Fechas</th><th>Nombre</th><th>Tipo</th><th>Formato</th><th>Estado</th><th>Responsable</th><th>KPI objetivo</th><th>KPI resultado</th><th>WhatsApp</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div id="disparoResultado" style="margin-top:12px"></div></div>`;
+}
+
+async function dispararActivacionWhatsApp(activacionId, btn){
+  const resultadoEl = document.getElementById('disparoResultado');
+  const original = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Disparando…';
+  try {
+    const { data, error } = await supabase.functions.invoke('activacion-manychat', { body: { activacion_id: activacionId } });
+    if (error) throw error;
+    const d = data?.data;
+    const estado = d?.estado || 'error';
+    const color = estado==='ok' ? 'var(--tq-fucsia)' : estado==='parcial' ? 'var(--tq-naranja)' : 'var(--tq-naranja)';
+    resultadoEl.innerHTML = `<div class="sub" style="margin-bottom:0; color:${color}">Disparo ${estado} — ${d?.cantidad_contactos ?? 0} contacto(s) con <code>manychat_subscriber_id</code>. Tag: <code>${d?.tag_manychat ?? '—'}</code>.</div>`;
+  } catch (err) {
+    resultadoEl.innerHTML = `<div class="sub" style="margin-bottom:0; color:var(--tq-naranja)">No se pudo disparar: ${err.message || err}. Revisá que la Edge Function esté deployada y el secret MANYCHAT_API_KEY cargado (ver README).</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = original;
+  }
 }
 
 function renderDecisiones(c){
@@ -777,7 +801,12 @@ async function renderAll(){
       const [contactos, mapaVoces] = await Promise.all([loadContactos(state.comunidad), loadMapaVoces(state.comunidad)]);
       content.innerHTML = renderRelacion(contactos, mapaVoces, state.role);
     }
-    else if (state.activo === 'activaciones') content.innerHTML = renderActivaciones(await loadActivaciones(state.comunidad));
+    else if (state.activo === 'activaciones') {
+      content.innerHTML = renderActivaciones(await loadActivaciones(state.comunidad));
+      content.querySelectorAll('.btn-disparar-wsp').forEach(btn => {
+        btn.onclick = () => dispararActivacionWhatsApp(btn.dataset.id, btn);
+      });
+    }
     else if (state.activo === 'decisiones') content.innerHTML = renderDecisiones(c);
   } catch (err) {
     content.innerHTML = `<div class="card"><h3>Error consultando Supabase</h3><div class="sub" style="margin-bottom:0; color:var(--tq-naranja)">${err.message}</div></div>`;

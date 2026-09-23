@@ -82,6 +82,7 @@ Entidad central: un solo registro por persona, que avanza por `estado_identifica
 | `consentimiento_registrado` | boolean, default false | Ley 25.326 |
 | `referido_por_contacto_id` | uuid, FK → `contacto.id` | Quién trajo a este contacto. Null = no se cargó (no implica que no exista un referido) |
 | `fecha_baja` | timestamptz | Marca explícita de abandono. Null = activo. Se carga a mano, nunca se infiere (`db/002_overview_metricas.sql`) |
+| `manychat_subscriber_id` | text | Subscriber ID de ManyChat vinculado. Null = todavía no vinculado. Único por comunidad (no globalmente — cada comunidad puede tener su propia cuenta de ManyChat). Sin esto, `activacion-manychat` no puede direccionarle un tag (`db/006_activaciones_whatsapp.sql`) |
 | `fecha_alta`, `created_at`, `updated_at` | timestamptz | |
 
 Constraint: `(comunidad_id, telefono_hash)` único — el mismo teléfono en otra comunidad es una persona distinta a los fines de este CRM (comunidades aisladas entre sí).
@@ -153,9 +154,25 @@ Registro propio del activo 5 (Activaciones). Definida en [`db/003_activaciones.s
 | `fecha_inicio` / `fecha_fin` | date | |
 | `kpi_objetivo` / `kpi_resultado` | jsonb | Shape libre (ej. `{"leads_calificados": 500}`) — cada activación puede medir cosas distintas, mismo criterio que `contacto.score_compuesto` |
 | `estado` | text | `planificada` \| `en_curso` \| `cerrada` \| `cancelada` |
+| `formato_operativo` | text, nullable | `entrevista_indagatoria` \| `promocion` \| `anuncio_lanzamiento` — qué tipo de acción es, eje independiente de `tipo` (`db/006_activaciones_whatsapp.sql`) |
 | `responsable` | text | Nombre del AM a cargo, texto libre |
 | `responsable_usuario_id` | uuid, FK → `auth.users.id`, nullable | Para cuando `am_estratega` tenga login real |
 | `created_at` / `updated_at` | timestamptz | |
+
+### `activacion_disparo`
+Audit log de cada intento de disparo hacia ManyChat/WhatsApp para una activación. Definida en [`db/006_activaciones_whatsapp.sql`](../../db/006_activaciones_whatsapp.sql).
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | uuid, PK | |
+| `activacion_id` | uuid, FK → `activacion.id` on delete cascade | |
+| `filtro_usado` | jsonb | Filtro de segmento aplicado (`arquetipo_id`/`corredor_localidad`/`estado_identificacion`) |
+| `cantidad_contactos` | int | Contactos incluidos en el disparo |
+| `tag_manychat` | text | Tag aplicado (`activacion_<id>`) |
+| `estado` | text | `ok` \| `parcial` \| `error` |
+| `respuesta_api` | jsonb | Resultado crudo de la llamada a ManyChat, o el motivo del error |
+| `disparado_por` | text | Email del admin que disparó |
+| `creado_en` | timestamptz | |
 
 Sin ninguna FK hacia `contacto` ni `evento_journey` — deliberado, ver [Modelo de identificación y gobernanza de exportación](../explanation/modelo-de-identificacion-y-gobernanza-de-exportacion.md#activaciones-activo-5-por-qué-no-toca-crecimiento).
 
