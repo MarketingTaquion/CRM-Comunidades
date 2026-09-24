@@ -766,7 +766,173 @@ async function refrescarTratos(role){
   wireTratos(role);
 }
 
-function renderOverview(metricas, barrios, arquetipos, contactos, role, tratos){
+/* ---------- Métricas semanales (foto guardada) — Fase 7, specs/2026-09-24-medicion-y-cohortes.md ---------- */
+function mondayISO(d){
+  const date = new Date(d);
+  const day = date.getDay(); // 0 = domingo
+  const diff = (day === 0 ? -6 : 1) - day;
+  date.setDate(date.getDate() + diff);
+  return date.toISOString().slice(0,10);
+}
+
+async function loadContactosParaFoto(comunidadId){
+  const { data, error } = await supabase
+    .from('contacto')
+    .select('corredor_localidad, nivel_activacion, fecha_alta, fecha_baja, referido_por_contacto_id')
+    .eq('comunidad_id', comunidadId);
+  if (error) throw error;
+  return data || [];
+}
+
+function calcularFotoSemanal(contactos, corredor, semanaInicio){
+  const finExclusivo = new Date(semanaInicio + 'T00:00:00');
+  finExclusivo.setDate(finExclusivo.getDate() + 7);
+  const finISO = finExclusivo.toISOString().slice(0,10);
+  const scoped = corredor ? contactos.filter(c => c.corredor_localidad === corredor) : contactos;
+  const enRango = (fecha) => !!fecha && fecha.slice(0,10) >= semanaInicio && fecha.slice(0,10) < finISO;
+
+  const total = scoped.length;
+  const activos = scoped.filter(c => !c.fecha_baja).length;
+  const nuevos = scoped.filter(c => enRango(c.fecha_alta)).length;
+  const bajasSemana = scoped.filter(c => enRango(c.fecha_baja)).length;
+  const engaged = scoped.filter(c => !c.fecha_baja && (c.nivel_activacion ?? 0) >= 3).length;
+  const conReferido = scoped.filter(c => c.referido_por_contacto_id).length;
+  const dadosDeBajaTotal = scoped.filter(c => c.fecha_baja).length;
+
+  return {
+    contactos_nuevos: nuevos,
+    contactos_activos: activos,
+    contactos_dados_de_baja: bajasSemana,
+    engagement_rate: activos ? Math.round((engaged/activos)*10000)/10000 : null,
+    tasa_abandono: total ? Math.round((dadosDeBajaTotal/total)*10000)/10000 : null,
+    tasa_referidos: total ? Math.round((conReferido/total)*10000)/10000 : null,
+  };
+}
+
+async function loadMetricasSemanales(comunidadId){
+  const { data, error } = await supabase
+    .from('metrica_semanal').select('*').eq('comunidad_id', comunidadId)
+    .order('semana_inicio', { ascending:false });
+  if (error) throw error;
+  return data || [];
+}
+
+async function guardarFotoSemanal(comunidadId, corredor, semanaInicio, manuales, cargadoPor){
+  const contactos = await loadContactosParaFoto(comunidadId);
+  const auto = calcularFotoSemanal(contactos, corredor || null, semanaInicio);
+  const payload = { comunidad_id: comunidadId, corredor_localidad: corredor || null, semana_inicio: semanaInicio, ...auto, ...manuales, cargado_por: cargadoPor };
+
+  let query = supabase.from('metrica_semanal').select('id').eq('comunidad_id', comunidadId).eq('semana_inicio', semanaInicio);
+  query = corredor ? query.eq('corredor_localidad', corredor) : query.is('corredor_localidad', null);
+  const { data: existing, error: selError } = await query.maybeSingle();
+  if (selError) throw selError;
+
+  if (existing) {
+    const { error } = await supabase.from('metrica_semanal').update(payload).eq('id', existing.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from('metrica_semanal').insert(payload);
+    if (error) throw error;
+  }
+}
+
+function renderMetricasSemanales(fotos, barrios){
+  const corredores = (barrios||[]).map(b => b.corredor_localidad).filter(c => c && c !== 'sin asignar');
+  const hoyLunes = mondayISO(new Date());
+  const opcionesCorredor = `<option value="">Toda la comunidad</option>` +
+    corredores.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  const pct = v => v==null ? '—' : (Math.round(v*1000)/10) + '%';
+  const money = v => v==null ? '—' : '$' + Number(v).toLocaleString('es-AR');
+
+  const rows = fotos.length
+    ? fotos.map(f => `<tr>
+        <td class="mono" style="white-space:nowrap">${f.semana_inicio}</td>
+        <td>${f.corredor_localidad || 'Toda la comunidad'}</td>
+        <td class="mono">${f.contactos_nuevos}</td>
+        <td class="mono">${f.contactos_activos}</td>
+        <td class="mono">${f.contactos_dados_de_baja}</td>
+        <td class="mono">${pct(f.engagement_rate)}</td>
+        <td class="mono">${pct(f.tasa_abandono)}</td>
+        <td class="mono">${money(f.inversion_pauta)}</td>
+        <td class="mono">${money(f.cpl)}</td>
+        <td class="mono">${f.conversaciones_meta ?? '—'}</td>
+        <td class="mono">${f.clics ?? '—'}</td>
+      </tr>`).join('')
+    : `<tr class="empty-row"><td colspan="11">Sin fotos guardadas todavía — usá el formulario de arriba para guardar la primera.</td></tr>`;
+
+  return `<div class="card" id="metricasSemanalesWrap">
+    <h3>Fotos semanales</h3>
+    <div class="sub">Guarda un punto en el tiempo por comunidad/corredor (<code>metrica_semanal</code>) — la base de las cohortes de ingreso/retención. Inversión/CPL/conversaciones/clics se cargan a mano, aparte de Pulso (ver <code>specs/2026-09-24-medicion-y-cohortes.md</code>).</div>
+    <form id="formFotoSemanal" style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin-bottom:16px; padding:12px; background:var(--panel-raised); border:1px solid var(--border); border-radius:var(--r-in)">
+      <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--text-faint)">Corredor
+        <select name="corredor" style="background:var(--panel-sunken); border:1px solid var(--border); color:#fff; padding:7px 9px; border-radius:var(--r-in); font-size:12px">${opcionesCorredor}</select>
+      </label>
+      <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--text-faint)">Semana (lunes)
+        <input type="date" name="semana_inicio" value="${hoyLunes}" style="background:var(--panel-sunken); border:1px solid var(--border); color:#fff; padding:7px 9px; border-radius:var(--r-in); font-size:12px">
+      </label>
+      <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--text-faint)">Inversión en pauta
+        <input type="number" step="0.01" name="inversion_pauta" placeholder="$" style="width:110px; background:var(--panel-sunken); border:1px solid var(--border); color:#fff; padding:7px 9px; border-radius:var(--r-in); font-size:12px">
+      </label>
+      <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--text-faint)">CPL
+        <input type="number" step="0.01" name="cpl" placeholder="$" style="width:90px; background:var(--panel-sunken); border:1px solid var(--border); color:#fff; padding:7px 9px; border-radius:var(--r-in); font-size:12px">
+      </label>
+      <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--text-faint)">Conversaciones (Meta)
+        <input type="number" name="conversaciones_meta" style="width:90px; background:var(--panel-sunken); border:1px solid var(--border); color:#fff; padding:7px 9px; border-radius:var(--r-in); font-size:12px">
+      </label>
+      <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--text-faint)">Clics
+        <input type="number" name="clics" style="width:90px; background:var(--panel-sunken); border:1px solid var(--border); color:#fff; padding:7px 9px; border-radius:var(--r-in); font-size:12px">
+      </label>
+      <button type="submit" style="background:var(--tq-fucsia); border:none; color:#fff; font-size:12px; font-weight:700; padding:9px 14px; border-radius:var(--r-in); cursor:pointer; white-space:nowrap">Guardar foto de esta semana</button>
+    </form>
+    <div id="fotoSemanalResultado" style="margin-bottom:12px"></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Semana</th><th>Corredor</th><th>Nuevos</th><th>Activos</th><th>Bajas</th><th>Engagement</th><th>Abandono</th><th>Inversión</th><th>CPL</th><th>Conv. Meta</th><th>Clics</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </div>`;
+}
+
+function wireMetricasSemanales(role){
+  const form = document.getElementById('formFotoSemanal');
+  if (!form) return;
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button[type=submit]');
+    const original = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Guardando…';
+    const resultadoEl = document.getElementById('fotoSemanalResultado');
+    try {
+      const fd = new FormData(form);
+      const corredor = fd.get('corredor') || null;
+      const semanaInicio = fd.get('semana_inicio');
+      const numOrNull = (v) => v === '' || v === null ? null : Number(v);
+      const manuales = {
+        inversion_pauta: numOrNull(fd.get('inversion_pauta')),
+        cpl: numOrNull(fd.get('cpl')),
+        conversaciones_meta: numOrNull(fd.get('conversaciones_meta')),
+        clics: numOrNull(fd.get('clics')),
+      };
+      await guardarFotoSemanal(state.comunidad, corredor, semanaInicio, manuales, state.role);
+      resultadoEl.innerHTML = `<div class="sub" style="margin-bottom:0; color:var(--tq-fucsia)">Foto guardada.</div>`;
+      await refrescarMetricasSemanales(role);
+    } catch (err) {
+      resultadoEl.innerHTML = `<div class="sub" style="margin-bottom:0; color:var(--tq-naranja)">No se pudo guardar: ${err.message || err}</div>`;
+    } finally {
+      btn.disabled = false; btn.textContent = original;
+    }
+  };
+}
+
+async function refrescarMetricasSemanales(role){
+  const [fotos, barrios] = await Promise.all([
+    loadMetricasSemanales(state.comunidad),
+    loadOverviewBarrios(state.comunidad),
+  ]);
+  const wrap = document.getElementById('metricasSemanalesWrap');
+  if (!wrap) return;
+  wrap.outerHTML = renderMetricasSemanales(fotos, barrios);
+  wireMetricasSemanales(role);
+}
+
+function renderOverview(metricas, barrios, arquetipos, contactos, role, tratos, fotos){
   const total = metricas?.total_contactos ?? 0;
   const pct = v => v==null ? '—' : (Math.round(v*1000)/10) + '%';
 
@@ -788,6 +954,7 @@ function renderOverview(metricas, barrios, arquetipos, contactos, role, tratos){
 
   return kpis +
     renderPipeline(contactos, role) +
+    renderMetricasSemanales(fotos, barrios) +
     renderTratos(tratos, role) +
     `<div class="card"><h3>Por barrio / corredor</h3><div class="sub">Distribución real de <code>contacto.corredor_localidad</code> (vista <code>overview_por_barrio</code>).</div>${barRows(barrios, 'corredor_localidad')}</div>` +
     `<div class="card"><h3>Por arquetipo</h3><div class="sub">Distribución real de arquetipo asignado, o interés declarado si la comunidad no usa arquetipos (vista <code>overview_por_arquetipo</code>).</div>${barRows(arquetipos, 'arquetipo')}</div>` +
@@ -865,15 +1032,17 @@ async function renderAll(){
     sub.textContent = `${c.nombre_interno} (${c.cliente||'—'}) · pipeline de leads, barrio, arquetipos y métricas de performance`;
     content.innerHTML = '<div class="card"><h3>Cargando…</h3></div>';
     try {
-      const [metricas, barrios, arquetipos, contactos, tratos] = await Promise.all([
+      const [metricas, barrios, arquetipos, contactos, tratos, fotos] = await Promise.all([
         loadComunidadMetricas(state.comunidad),
         loadOverviewBarrios(state.comunidad),
         loadOverviewArquetipos(state.comunidad),
         loadContactos(state.comunidad),
         loadTratos(state.comunidad),
+        loadMetricasSemanales(state.comunidad),
       ]);
-      content.innerHTML = renderOverview(metricas, barrios, arquetipos, contactos, state.role, tratos);
+      content.innerHTML = renderOverview(metricas, barrios, arquetipos, contactos, state.role, tratos, fotos);
       wireTratos(state.role);
+      wireMetricasSemanales(state.role);
     } catch (err) {
       content.innerHTML = `<div class="card"><h3>Error consultando Supabase</h3><div class="sub" style="margin-bottom:0; color:var(--tq-naranja)">${err.message}</div></div>`;
     }

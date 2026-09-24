@@ -191,6 +191,26 @@ Pipeline de oportunidades (deals) en Overview, independiente de `estado_identifi
 
 Por qué es una tabla propia y no una columna en `contacto`: un trato es una decisión manual del equipo (arrastrarlo de columna en columna es exactamente el punto), mientras que `estado_identificacion` solo avanza por criterios reales y nunca se fuerza a mano — mezclar los dos rompería esa regla (ver [Modelo de identificación y gobernanza de exportación](../explanation/modelo-de-identificacion-y-gobernanza-de-exportacion.md)).
 
+### `metrica_semanal`
+Foto semanal guardada por comunidad/corredor — base de las cohortes de ingreso/retención (Fase 7, reunión Jazleidis/Juan 2026-09-23). Definida en [`db/008_metrica_semanal.sql`](../../db/008_metrica_semanal.sql). Ver [`specs/2026-09-24-medicion-y-cohortes.md`](../../specs/2026-09-24-medicion-y-cohortes.md).
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | uuid, PK | |
+| `comunidad_id` | uuid, FK → `comunidad.id` on delete cascade | |
+| `corredor_localidad` | text, nullable | Null = foto de toda la comunidad; con valor = foto de ese corredor puntual |
+| `semana_inicio` | date, not null | Lunes de la semana que representa esta foto |
+| `contactos_nuevos` | int, default 0 | `contacto.fecha_alta` dentro de esa semana |
+| `contactos_activos` | int, default 0 | `contacto.fecha_baja is null`, foto al momento de guardar |
+| `contactos_dados_de_baja` | int, default 0 | `contacto.fecha_baja` dentro de esa semana (churn semanal, no acumulado) |
+| `engagement_rate`, `tasa_abandono`, `tasa_referidos` | numeric(6,4), nullable | Mismo criterio que `comunidad_metricas`, foto al momento de guardar |
+| `inversion_pauta`, `cpl` | numeric(12,2), nullable | Carga manual — no se integra con Pulso Ignite en esta fase (decisión 2026-09-24) |
+| `conversaciones_meta`, `clics` | int, nullable | Carga manual |
+| `cargado_por` | text, nullable | Rol/usuario que guardó la foto |
+| `creado_en` | timestamptz | |
+
+Es una foto guardada, no un cálculo al vuelo: cada fila es un punto en el tiempo, para poder mirar cómo se veía una comunidad/corredor en una semana puntual aunque los datos de `contacto` hayan cambiado después. Dos índices únicos parciales (uno con `corredor_localidad is null`, otro con `is not null`) evitan duplicar la foto de una misma semana, ya que Postgres trata cada `NULL` como distinto en un `unique` normal.
+
 ### `temporada`
 Fechas de cada temporada por comunidad — `comunidad.temporada_numero`/`fecha_inicio_temporada` solo guardan la actual, esta tabla guarda el historial. Definida en [`db/004_informe_decision_insumo.sql`](../../db/004_informe_decision_insumo.sql).
 
@@ -244,6 +264,6 @@ Definida en [`db/004_informe_decision_insumo.sql`](../../db/004_informe_decision
 
 ## RLS y permisos
 
-Las 9 tablas tienen RLS habilitado. Hoy solo existe la policy `admin_full_access` (usa `es_admin(auth.uid())`) en todas ellas — las de `am_estratega`/`cliente` están como plantilla comentada en el archivo SQL, para activar cuando esos roles salgan de backlog.
+Las 14 tablas tienen RLS habilitado. Hoy solo existe la policy `admin_full_access` (usa `es_admin(auth.uid())`) en todas ellas — las de `am_estratega`/`cliente` están como plantilla comentada en el archivo SQL, para activar cuando esos roles salgan de backlog.
 
 Además del RLS, el schema necesita sus propios `GRANT` (Supabase no los aplica automático fuera de `public`) — ver el bloque final de `001_init_crm_comunidades.sql` y la explicación en [Seguridad: RLS, GRANTs y visibilidad de Netlify](../explanation/seguridad-rls-grants-y-netlify.md).
