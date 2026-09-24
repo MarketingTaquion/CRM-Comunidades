@@ -16,6 +16,16 @@
   --font:"Archivo","Archivo Fallback",system-ui,sans-serif;
   --r-in:4px; --r-card:8px; --r-full:999px;
 }
+/* Modo claro — mismo switch manual (no sigue prefers-color-scheme), guardado
+   en localStorage y aplicado como atributo en <html> para evitar el flash
+   (ver el <script> inline justo después de este bloque de estilos). */
+:root[data-theme="light"]{
+  --bg:var(--tq-blanco); --panel:#FFFFFF; --panel-raised:#EFEFF1; --panel-sunken:var(--tq-gris-050);
+  --border:rgba(0,0,0,.10); --border-strong:rgba(0,0,0,.22);
+  --text-strong:var(--tq-negro); --text-body:var(--tq-gris-800); --text-muted:var(--tq-gris-600); --text-faint:var(--tq-gris-400);
+}
+:root[data-theme="light"] .state-anonimo{background:rgba(0,0,0,.03)}
+:root[data-theme="light"] .state-pseudo_anonimo{background:rgba(0,0,0,.045)}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{background:var(--bg); color:var(--text-body); font-family:var(--font); -webkit-font-smoothing:antialiased; font-variant-numeric:tabular-nums}
@@ -30,7 +40,7 @@ button,select,input{font-family:inherit}
 .login-screen{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px}
 .login-card{width:100%; max-width:360px; background:var(--panel); border:1px solid var(--border); border-radius:var(--r-card); padding:28px}
 .login-card label{display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-faint); margin:16px 0 6px}
-.login-card input{width:100%; background:var(--panel-raised); border:1px solid var(--border-strong); color:#fff; font-size:14px; padding:10px 11px; border-radius:var(--r-in)}
+.login-card input{width:100%; background:var(--panel-raised); border:1px solid var(--border-strong); color:var(--text-strong); font-size:14px; padding:10px 11px; border-radius:var(--r-in)}
 .login-card input:focus{outline:2px solid var(--tq-fucsia); outline-offset:1px}
 .login-error{color:var(--tq-naranja); font-size:12px; margin-top:12px; min-height:1em}
 .login-note{font-size:11px; color:var(--text-faint); margin-top:18px; line-height:1.5}
@@ -39,16 +49,16 @@ button,select,input{font-family:inherit}
 .sidebar{background:var(--panel-sunken); border-right:1px solid var(--border); padding:20px 16px; display:flex; flex-direction:column}
 .brand{display:flex; align-items:center; gap:9px; margin-bottom:2px}
 .brand svg{width:20px; height:20px; flex:none}
-.brand b{font-size:15px; color:#fff}
+.brand b{font-size:15px; color:var(--text-strong)}
 .brand-sub{font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.08em; margin-left:29px; margin-bottom:22px}
 
 .eyebrow{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text-faint); margin-bottom:8px}
-.field{width:100%; background:var(--panel-raised); border:1px solid var(--border-strong); color:#fff; font-size:13px; font-weight:600; padding:9px 10px; border-radius:var(--r-in); appearance:none; margin-bottom:20px}
+.field{width:100%; background:var(--panel-raised); border:1px solid var(--border-strong); color:var(--text-strong); font-size:13px; font-weight:600; padding:9px 10px; border-radius:var(--r-in); appearance:none; margin-bottom:20px}
 
 .navlist{display:flex; flex-direction:column; gap:1px; margin-bottom:22px}
 .nav-item{display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:var(--r-in); font-size:13px; color:var(--text-body); cursor:pointer; border:1px solid transparent; background:none; text-align:left; width:100%}
 .nav-item:hover{background:var(--panel-raised)}
-.nav-item.active{background:var(--panel-raised); border-color:var(--border-strong); color:#fff; font-weight:700}
+.nav-item.active{background:var(--panel-raised); border-color:var(--border-strong); color:var(--text-strong); font-weight:700}
 .nav-item.locked{color:var(--text-faint); cursor:default}
 .nav-item.locked:hover{background:none}
 .nav-dot{width:6px; height:6px; border-radius:50%; background:var(--text-faint); flex:none}
@@ -57,13 +67,18 @@ button,select,input{font-family:inherit}
 
 .sys-item{display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:var(--r-in); font-size:13px; color:var(--text-body); cursor:pointer; border:1px solid transparent; background:none; text-align:left; width:100%}
 .sys-item:hover{background:var(--panel-raised)}
-.sys-item.active{background:var(--panel-raised); border-color:var(--border-strong); color:#fff; font-weight:700}
+.sys-item.active{background:var(--panel-raised); border-color:var(--border-strong); color:var(--text-strong); font-weight:700}
 
 .sidebar-foot{margin-top:auto; padding-top:16px; border-top:1px solid var(--border)}
 .role-caption{font-size:11px; color:var(--text-faint); line-height:1.5; margin-top:8px}
 .role-caption b{color:var(--text-muted)}
 .session-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; font-size:11px; color:var(--text-faint)}
 .session-row button{background:none; border:none; color:var(--tq-azul); font-size:11px; cursor:pointer; padding:0}
+
+.theme-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; font-size:11px; color:var(--text-faint)}
+.theme-switch{position:relative; width:38px; height:21px; border-radius:var(--r-full); background:var(--panel-raised); border:1px solid var(--border-strong); cursor:pointer; padding:0; flex:none}
+.theme-switch .knob{position:absolute; top:1px; left:1px; width:17px; height:17px; border-radius:50%; background:var(--tq-fucsia); transition:transform .15s ease}
+.theme-switch[aria-checked="true"] .knob{transform:translateX(17px)}
 
 /* ---------- main ---------- */
 .main{padding:26px 32px 60px; max-width:1220px}
@@ -77,7 +92,7 @@ button,select,input{font-family:inherit}
 
 .kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; margin-bottom:22px}
 .kpi{background:var(--panel); border:1px solid var(--border); border-radius:var(--r-card); padding:16px 18px}
-.kpi .v{font-size:26px; font-weight:900; color:#fff; line-height:1.1}
+.kpi .v{font-size:26px; font-weight:900; color:var(--text-strong); line-height:1.1}
 .kpi .l{font-size:11.5px; color:var(--text-muted); margin-top:7px; text-transform:uppercase; letter-spacing:.03em}
 .kpi .t{font-size:11px; color:var(--text-faint); margin-top:3px}
 
@@ -110,7 +125,7 @@ tbody tr:hover{background:var(--panel-raised)}
 
 .funnel{display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin-bottom:22px}
 .funnel-step{background:var(--panel); border:1px solid var(--border); border-radius:var(--r-card); padding:14px 14px; position:relative}
-.funnel-step .v{font-size:19px; font-weight:900; color:#fff}
+.funnel-step .v{font-size:19px; font-weight:900; color:var(--text-strong)}
 .funnel-step .l{font-size:10.5px; color:var(--text-muted); margin-top:5px}
 .funnel-arrow{position:absolute; right:-14px; top:50%; transform:translateY(-50%); color:var(--text-faint); font-size:14px}
 .funnel-step:last-child .funnel-arrow{display:none}
@@ -143,6 +158,12 @@ tbody tr:hover{background:var(--panel-raised)}
    apiladas una debajo de otra sin importar lo que togglee el JS. */
 [hidden]{ display:none !important; }
 </style>
+
+<script>
+  try {
+    if (localStorage.getItem('crm-theme') === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  } catch (e) {}
+</script>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="ico-lock" viewBox="0 0 16 16"><rect x="3.25" y="7.25" width="9.5" height="6.75" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7.25V5.4a2.5 2.5 0 0 1 5 0v1.85" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
@@ -202,6 +223,10 @@ tbody tr:hover{background:var(--panel-raised)}
     </div>
 
     <div class="sidebar-foot">
+      <div class="theme-row">
+        <span id="themeLabel">Modo oscuro</span>
+        <button class="theme-switch" id="btnThemeToggle" type="button" role="switch" aria-checked="false" aria-label="Cambiar a modo claro"><span class="knob"></span></button>
+      </div>
       <div class="session-row"><span id="sessionEmail">—</span><button id="btnLogout">Cerrar sesión</button></div>
       <div class="eyebrow" style="margin-bottom:6px">Ver como rol</div>
       <select class="field" id="selRole" style="margin-bottom:0">
@@ -265,6 +290,25 @@ const loginForm = document.getElementById('loginForm');
 const loginError = document.getElementById('loginError');
 const recoveryForm = document.getElementById('recoveryForm');
 const recoveryError = document.getElementById('recoveryError');
+
+/* ---------- switch modo oscuro / claro ---------- */
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('btnThemeToggle');
+  const label = document.getElementById('themeLabel');
+  const isLight = theme === 'light';
+  if (btn){ btn.setAttribute('aria-checked', String(isLight)); btn.setAttribute('aria-label', isLight ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'); }
+  if (label) label.textContent = isLight ? 'Modo claro' : 'Modo oscuro';
+  try { localStorage.setItem('crm-theme', theme); } catch (e) {}
+}
+(function initTheme(){
+  let theme = 'dark';
+  try { theme = localStorage.getItem('crm-theme') === 'light' ? 'light' : 'dark'; } catch (e) {}
+  applyTheme(theme);
+})();
+document.getElementById('btnThemeToggle').addEventListener('click', () => {
+  applyTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+});
 
 function showLoginError(msg){ loginError.textContent = msg; }
 function showRecoveryError(msg){ recoveryError.textContent = msg; }
@@ -501,7 +545,7 @@ function renderActivaciones(activaciones){
       <td class="mono" style="font-size:12px">${fmtKpiJson(a.kpi_objetivo)}</td>
       <td class="mono" style="font-size:12px">${fmtKpiJson(a.kpi_resultado)}</td>
       <td>${a.estado === 'en_curso'
-        ? `<button class="btn-disparar-wsp" data-id="${a.id}" style="background:var(--panel-raised); border:1px solid var(--border-strong); color:#fff; font-size:11.5px; font-weight:700; padding:6px 10px; border-radius:var(--r-in); cursor:pointer; white-space:nowrap">Disparar por WhatsApp</button>`
+        ? `<button class="btn-disparar-wsp" data-id="${a.id}" style="background:var(--panel-raised); border:1px solid var(--border-strong); color:var(--text-strong); font-size:11.5px; font-weight:700; padding:6px 10px; border-radius:var(--r-in); cursor:pointer; white-space:nowrap">Disparar por WhatsApp</button>`
         : `<span style="color:var(--text-faint); font-size:11.5px">—</span>`}</td>
     </tr>`).join('');
   return `<div class="card"><h3>Activaciones</h3><div class="sub">Datos reales de <code>crm_comunidades.activacion</code>, deliberadamente separados de Crecimiento (no toca <code>contacto</code>/<code>evento_journey</code>). El disparo por WhatsApp aplica un tag vía ManyChat a los contactos ya vinculados (<code>contacto.manychat_subscriber_id</code>) — nunca envía contenido libre, ver <code>specs/2026-09-23-pivot-leads-whatsapp.md</code>.</div>
@@ -536,7 +580,7 @@ function renderDecisiones(c){
   const rows = ejemplos.map(d => `<div style="margin-bottom:18px">
       <div style="display:flex; gap:12px; align-items:baseline; margin-bottom:4px">
         <span class="mono" style="color:var(--text-faint); font-size:11px; white-space:nowrap">${d.fecha}</span>
-        <b style="color:#fff; font-size:13px">${d.decision}</b>
+        <b style="color:var(--text-strong); font-size:13px">${d.decision}</b>
       </div>
       <div class="sub" style="margin-bottom:0">${d.motivo}</div>
     </div>`).join('');
@@ -579,7 +623,7 @@ function renderRelacion(contactos, mapaVoces, role){
     mapa = `<div class="card"><h3>Mapa de Voces (Top Activadores)</h3><div class="sub" style="margin-bottom:0">Uso interno de Taquión — nunca visible para el rol cliente.</div>${lockedPanel('No disponible para el rol cliente.')}</div>`;
   } else {
     const mvRows = mapaVoces.length
-      ? mapaVoces.map(m => `<tr><td style="color:#fff">${m.nombre||'—'}</td><td>${m.corredor_localidad||'—'}</td><td>${m.arquetipo||'—'}</td><td class="mono">${m.nivel_activacion}/5</td><td class="mono">${m.afinidad_narrativa_principal||'—'}</td></tr>`).join('')
+      ? mapaVoces.map(m => `<tr><td style="color:var(--text-strong)">${m.nombre||'—'}</td><td>${m.corredor_localidad||'—'}</td><td>${m.arquetipo||'—'}</td><td class="mono">${m.nivel_activacion}/5</td><td class="mono">${m.afinidad_narrativa_principal||'—'}</td></tr>`).join('')
       : `<tr class="empty-row"><td colspan="5">Ningún contacto llegó todavía al criterio de Mapa de Voces (Enriquecido/Confirmado + 3+ semanas + nivel ≥ 4).</td></tr>`;
     mapa = `<div class="card"><h3>Mapa de Voces (Top Activadores)</h3><div class="sub">Vista <code>mapa_de_voces</code> — filtro real sobre la misma tabla de contactos, no una tabla aparte.</div>
       <div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>Corredor</th><th>Arquetipo</th><th>Nivel</th><th>Afinidad narrativa</th></tr></thead><tbody>${mvRows}</tbody></table></div></div>`;
@@ -620,13 +664,13 @@ function renderExport(role, comunidadId, comunidadNombre){
     };
   }, 0);
   return `<div class="export-grid">
-    <div class="export-card"><div class="head"><span class="export-dot" style="background:var(--tq-azul)"></span><b style="color:#fff;font-size:13px">Nivel 1 · Operativo/cliente</b></div>
+    <div class="export-card"><div class="head"><span class="export-dot" style="background:var(--tq-azul)"></span><b style="color:var(--text-strong);font-size:13px">Nivel 1 · Operativo/cliente</b></div>
       <p>Agregado por arquetipo, corredor y nivel de activación — vista <code>export_nivel1_agregado</code>. Nunca nombre, teléfono ni username individual.</p>
       <button class="btn btn-fill" id="btnExportNivel1">Exportar CSV</button></div>
-    <div class="export-card"><div class="head"><span class="export-dot" style="background:var(--tq-naranja)"></span><b style="color:#fff;font-size:13px">Nivel 2 · Interno Taquión</b></div>
+    <div class="export-card"><div class="head"><span class="export-dot" style="background:var(--tq-naranja)"></span><b style="color:var(--text-strong);font-size:13px">Nivel 2 · Interno Taquión</b></div>
       <p>Dataset nominal completo, incluye el Mapa de Voces. Requiere rol admin_taquion o AM-Estratega y un motivo registrado — endpoint todavía no construido.</p>
       <button class="btn" disabled><svg class="icn-inline"><use href="#ico-lock"/></svg>Exportar dataset nominal</button></div>
-    <div class="export-card"><div class="head"><span class="export-dot" style="background:var(--tq-fucsia)"></span><b style="color:#fff;font-size:13px">Nivel 3 · Plataformas externas</b></div>
+    <div class="export-card"><div class="head"><span class="export-dot" style="background:var(--tq-fucsia)"></span><b style="color:var(--text-strong);font-size:13px">Nivel 3 · Plataformas externas</b></div>
       <p>Push directo a Meta Custom Audience o sync a Sheets/Airtable — no construido todavía.</p>
       <button class="btn" disabled><svg class="icn-inline"><use href="#ico-lock"/></svg>Push Custom Audience</button></div>
   </div>
@@ -643,7 +687,7 @@ function renderPipeline(contactos, role){
       ? items.map(c => {
           const arqOInteres = c.arquetipo?.nombre || c.interes_declarado || '—';
           return `<div style="background:var(--panel-raised); border:1px solid var(--border); border-radius:var(--r-in); padding:10px 11px; margin-bottom:8px">
-            <div style="font-size:12.5px; font-weight:700; color:#fff; margin-bottom:4px">${contactName(c, role)}</div>
+            <div style="font-size:12.5px; font-weight:700; color:var(--text-strong); margin-bottom:4px">${contactName(c, role)}</div>
             <div style="font-size:11px; color:var(--text-muted)">${arqOInteres}${c.corredor_localidad ? ' · '+c.corredor_localidad : ''}</div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px">
               <span class="mono" style="font-size:11px; color:var(--text-faint)">Nivel ${c.nivel_activacion ?? '—'}/5</span>
@@ -697,19 +741,19 @@ function renderTratos(tratos, role){
     const items = porEstado[estado] || [];
     const cards = items.map(t => `
       <div class="trato-card" draggable="true" data-trato-id="${t.id}" style="background:var(--panel-raised); border:1px solid var(--border-strong); border-radius:var(--r-in); padding:10px 11px; margin-bottom:8px; cursor:grab">
-        <div style="font-size:12.5px; font-weight:700; color:#fff; margin-bottom:4px">${t.nombre}</div>
+        <div style="font-size:12.5px; font-weight:700; color:var(--text-strong); margin-bottom:4px">${t.nombre}</div>
         ${t.contacto ? `<div style="font-size:11px; color:var(--text-muted)">${contactName(t.contacto, role)}</div>` : ''}
         ${t.activacion ? `<div style="font-size:11px; color:var(--text-faint)">Activación: ${t.activacion.nombre}</div>` : ''}
         <div style="font-size:10.5px; color:var(--text-faint); margin-top:6px">${relTime(t.updated_at)}</div>
       </div>`).join('');
     return `<div style="flex:none; width:220px; display:flex; flex-direction:column">
       <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 2px; border-bottom:2px solid var(--border-strong); margin-bottom:10px">
-        <span style="font-size:12px; font-weight:700; color:#fff; text-transform:uppercase; letter-spacing:.03em">${TRATO_ESTADO_LABEL[estado]}</span>
+        <span style="font-size:12px; font-weight:700; color:var(--text-strong); text-transform:uppercase; letter-spacing:.03em">${TRATO_ESTADO_LABEL[estado]}</span>
         <span class="mono" style="font-size:12px; color:var(--text-muted); font-weight:700">${items.length}</span>
       </div>
       <div class="trato-dropzone" data-estado="${estado}" style="min-height:70px; max-height:340px; overflow-y:auto; border-radius:var(--r-in)">${cards}</div>
       <form class="trato-add-form" data-estado="${estado}" style="margin-top:8px">
-        <input type="text" placeholder="+ Nuevo trato" style="width:100%; background:var(--panel-sunken); border:1px solid var(--border); color:#fff; font-size:11.5px; padding:7px 9px; border-radius:var(--r-in)">
+        <input type="text" placeholder="+ Nuevo trato" style="width:100%; background:var(--panel-sunken); border:1px solid var(--border); color:var(--text-strong); font-size:11.5px; padding:7px 9px; border-radius:var(--r-in)">
       </form>
     </div>`;
   }).join('');
@@ -866,22 +910,22 @@ function renderMetricasSemanales(fotos, barrios){
     <div class="sub">Guarda un punto en el tiempo por comunidad/corredor (<code>metrica_semanal</code>) — la base de las cohortes de ingreso/retención. Inversión/CPL/conversaciones/clics se cargan a mano, aparte de Pulso (ver <code>specs/2026-09-24-medicion-y-cohortes.md</code>).</div>
     <form id="formFotoSemanal" style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin-bottom:16px; padding:12px; background:var(--panel-raised); border:1px solid var(--border); border-radius:var(--r-in)">
       <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--text-faint)">Corredor
-        <select name="corredor" style="background:var(--panel-sunken); border:1px solid var(--border); color:#fff; padding:7px 9px; border-radius:var(--r-in); font-size:12px">${opcionesCorredor}</select>
+        <select name="corredor" style="background:var(--panel-sunken); border:1px solid var(--border); color:var(--text-strong); padding:7px 9px; border-radius:var(--r-in); font-size:12px">${opcionesCorredor}</select>
       </label>
       <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--text-faint)">Semana (lunes)
-        <input type="date" name="semana_inicio" value="${hoyLunes}" style="background:var(--panel-sunken); border:1px solid var(--border); color:#fff; padding:7px 9px; border-radius:var(--r-in); font-size:12px">
+        <input type="date" name="semana_inicio" value="${hoyLunes}" style="background:var(--panel-sunken); border:1px solid var(--border); color:var(--text-strong); padding:7px 9px; border-radius:var(--r-in); font-size:12px">
       </label>
       <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--text-faint)">Inversión en pauta
-        <input type="number" step="0.01" name="inversion_pauta" placeholder="$" style="width:110px; background:var(--panel-sunken); border:1px solid var(--border); color:#fff; padding:7px 9px; border-radius:var(--r-in); font-size:12px">
+        <input type="number" step="0.01" name="inversion_pauta" placeholder="$" style="width:110px; background:var(--panel-sunken); border:1px solid var(--border); color:var(--text-strong); padding:7px 9px; border-radius:var(--r-in); font-size:12px">
       </label>
       <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--text-faint)">CPL
-        <input type="number" step="0.01" name="cpl" placeholder="$" style="width:90px; background:var(--panel-sunken); border:1px solid var(--border); color:#fff; padding:7px 9px; border-radius:var(--r-in); font-size:12px">
+        <input type="number" step="0.01" name="cpl" placeholder="$" style="width:90px; background:var(--panel-sunken); border:1px solid var(--border); color:var(--text-strong); padding:7px 9px; border-radius:var(--r-in); font-size:12px">
       </label>
       <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--text-faint)">Conversaciones (Meta)
-        <input type="number" name="conversaciones_meta" style="width:90px; background:var(--panel-sunken); border:1px solid var(--border); color:#fff; padding:7px 9px; border-radius:var(--r-in); font-size:12px">
+        <input type="number" name="conversaciones_meta" style="width:90px; background:var(--panel-sunken); border:1px solid var(--border); color:var(--text-strong); padding:7px 9px; border-radius:var(--r-in); font-size:12px">
       </label>
       <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--text-faint)">Clics
-        <input type="number" name="clics" style="width:90px; background:var(--panel-sunken); border:1px solid var(--border); color:#fff; padding:7px 9px; border-radius:var(--r-in); font-size:12px">
+        <input type="number" name="clics" style="width:90px; background:var(--panel-sunken); border:1px solid var(--border); color:var(--text-strong); padding:7px 9px; border-radius:var(--r-in); font-size:12px">
       </label>
       <button type="submit" style="background:var(--tq-fucsia); border:none; color:#fff; font-size:12px; font-weight:700; padding:9px 14px; border-radius:var(--r-in); cursor:pointer; white-space:nowrap">Guardar foto de esta semana</button>
     </form>
