@@ -24,8 +24,19 @@
   --border:rgba(0,0,0,.10); --border-strong:rgba(0,0,0,.22);
   --text-strong:var(--tq-negro); --text-body:var(--tq-gris-800); --text-muted:var(--tq-gris-600); --text-faint:var(--tq-gris-400);
 }
-:root[data-theme="light"] .state-anonimo{background:rgba(0,0,0,.03)}
-:root[data-theme="light"] .state-pseudo_anonimo{background:rgba(0,0,0,.045)}
+/* Los 4 acentos de marca (azul/naranja/fucsia) se eligieron para leerse
+   sobre fondo negro — como texto de pill sobre blanco no llegan a 4.5:1 de
+   contraste (el naranja ronda 1.6:1). En claro se oscurecen solo acá, sin
+   tocar --tq-azul/naranja/fucsia globales (botones, badges, etc. siguen
+   usando el acento de marca real). anonimo/pseudo-anonimo comparten texto
+   (--text-muted es el gris más oscuro que sigue pasando contraste en claro)
+   y se diferencian por fondo/borde en vez de por tono de texto. */
+:root[data-theme="light"] .state-anonimo{color:var(--text-muted); border-color:rgba(0,0,0,.16); background:rgba(0,0,0,.035)}
+:root[data-theme="light"] .state-pseudo_anonimo{color:var(--text-muted); border-color:var(--border-strong); background:rgba(0,0,0,.06)}
+:root[data-theme="light"] .state-semi_identificado{color:#2C46D9; border-color:rgba(44,70,217,.4); background:rgba(44,70,217,.08)}
+:root[data-theme="light"] .state-identificado{color:#2C46D9; border-color:rgba(44,70,217,.55); background:rgba(44,70,217,.14)}
+:root[data-theme="light"] .state-enriquecido{color:#A85E00; border-color:rgba(168,94,0,.4); background:rgba(168,94,0,.1)}
+:root[data-theme="light"] .state-confirmado{color:#C2009C; border-color:rgba(194,0,156,.4); background:rgba(194,0,156,.1)}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{background:var(--bg); color:var(--text-body); font-family:var(--font); -webkit-font-smoothing:antialiased; font-variant-numeric:tabular-nums}
