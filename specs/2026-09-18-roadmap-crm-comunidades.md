@@ -14,6 +14,16 @@ Fuentes: `SDD-TAQUION/specs/006-crm-comunidades.md`, `SDD-TAQUION/docs/contexto-
 | **Crecer** | Journey/adquisición vía ManyChat (hoy sin integrar, ver auditoría UTM) y nivel de activación cargado manualmente | Overview (barrio/arquetipo + engagement/abandono/referidos reales por comunidad), funnel de Crecimiento por `estado_identificacion`, Mapa de Voces (vista gobernada, nunca al cliente); auditoría del circuito UTM/ManyChat con evidencia real; sistema de VOC con captación de audios y embeddings para transcripción y búsqueda semántica | A AM/dirección un panel de performance por comunidad (nunca promediado entre comunidades) y el diagnóstico honesto de qué falta para la atribución de canal; a Insights un repositorio de voz de la comunidad transcripto y buscable | Overview + Crecimiento + Relación + Mapa de Voces reales y funcionando (db/002); circuito UTM auditado, documentado como pendiente (0% de contactos con UTM cargado); VOC — no construido todavía |
 | **Cierre de temporada** (transversal, Informe de Decisión Ejecutiva) | Lo cuantitativo ya instrumentado en Crecimiento/Relación al momento del cierre | Vista automática `informe_decision_insumo` (foto acumulada al cierre + actividad de la temporada) y tabla `informe_decision` para que Insights/liderazgo escriban semáforo, aprendizajes y plan de acción a mano | A liderazgo/Insights el insumo numérico listo para el informe, sin fabricar el análisis cualitativo que les corresponde escribir a ellos | `temporada` + `informe_decision` + `informe_decision_insumo` aplicados (db/004); arranca vacío hasta cargar la primera fecha real de temporada |
 
+## Prioridad actual (actualizada 2026-09-24, reunión Jazleidis/Juan 2026-09-23)
+
+Esa reunión reencuadró el orden: *"priorizar el desarrollo del CRM enfocado en el tratamiento de leads y el flujo de métricas, en lugar de una plataforma tipo pipeline comercial"*, con cohortes de ingreso/retención semanales por corredor como entregable concreto. Detalle completo en [`specs/2026-09-24-medicion-y-cohortes.md`](2026-09-24-medicion-y-cohortes.md).
+
+1. **Fase 3 — Cerrar el circuito de datos.** Pasa a ser la prioridad número uno (antes que Fase 1/2).
+2. **Fase 7 — Medición y cohortes (nueva).** El entregable concreto que pidió la reunión — ver spec dedicado.
+3. Fase 1 (API pública) y Fase 2 (Reportes) siguen, en ese orden, pero detrás de las dos de arriba.
+4. **Fase 4 (Activaciones avanzadas) queda diferida** — incluye el pipeline de tratos (deals) agregado el 2026-09-23, que resultó ser justo lo que esa misma reunión decidió posponer. El código ya está escrito y deployado; no se retira, pero deja de ser foco de desarrollo activo.
+5. Fases 5 y 6 no cambian de lugar — siguen detrás de todo lo anterior.
+
 ## Roadmap de construcción
 
 ### Fase 0 — Base del CRM · **Hecho**
@@ -36,10 +46,11 @@ Fuentes: `SDD-TAQUION/specs/006-crm-comunidades.md`, `SDD-TAQUION/docs/contexto-
 - Webhook o importación real ManyChat → CRM (hoy 0% de contactos con UTM cargado)
 - Job semanal de recálculo de `nivel_activacion` / `semanas_consecutivas_activo`
 
-### Fase 4 — Activaciones avanzadas · **En progreso (2026-09-23)**
-- Disparo de segmentos hacia ManyChat vía tag — código escrito en el pivot `pivot/leads-whatsapp` (`db/006_activaciones_whatsapp.sql` + `supabase/functions/activacion-manychat/`), deploy y prueba end-to-end pendientes de una API key real de ManyChat y de contactos con `manychat_subscriber_id` poblado
-- `activacion.formato_operativo` (entrevista indagatoria / promoción / anuncio de lanzamiento) como nueva clasificación, sin reemplazar `tipo`
-- Landing pages con IA + CRO vía PostHog y activación de captación de audios de VOC por email/push — quedan planeadas, sin cambios en este pivot
+### Fase 4 — Activaciones avanzadas · **Diferida (2026-09-24, ver reunión 2026-09-23)**
+- Disparo de segmentos hacia ManyChat vía tag — código escrito el 2026-09-23 (`db/006_activaciones_whatsapp.sql` + `supabase/functions/activacion-manychat/`), deployado, pero sin API key real de ManyChat ni contactos con `manychat_subscriber_id` poblado — queda tal cual, sin seguir avanzando por ahora
+- `activacion.formato_operativo` (entrevista indagatoria / promoción / anuncio de lanzamiento) — construido, en pausa
+- Pipeline de tratos (deals, `db/007_tratos.sql`) — construido y deployado el 2026-09-23, **el mismo día que la reunión decidió diferir justo esto** ("interfaz tipo pipeline" → especificación futura). Queda como está, no se retira, pero no se sigue desarrollando
+- Landing pages con IA + CRO vía PostHog y activación de captación de audios de VOC por email/push — siguen planeadas, sin cambios
 
 ### Fase 5 — VOC (Voice of Customer) · Planeado
 - Pipeline de audio → transcripción → embeddings → búsqueda semántica
@@ -49,9 +60,15 @@ Fuentes: `SDD-TAQUION/specs/006-crm-comunidades.md`, `SDD-TAQUION/docs/contexto-
 - Login real + RLS para `am_estratega`/`cliente`
 - Exports Nivel 2/3 con audit log
 
+### Fase 7 — Medición y cohortes · **Nueva, prioridad #2 (2026-09-24)**
+- Foto semanal por comunidad/corredor: contactos nuevos, activos, dados de baja, engagement, abandono, referidos (auto-calculables) + inversión en pauta, CPL, conversaciones (Meta) y clics (carga manual, aparte — ver spec)
+- Cohortes de ingreso/retención semana a semana, por corredor (ej. San Luis, Boedo, Palermo, Villa Devoto)
+- Detalle completo, diseño de tabla propuesto y preguntas resueltas en [`specs/2026-09-24-medicion-y-cohortes.md`](2026-09-24-medicion-y-cohortes.md)
+
 ## Notas de alcance
 
 - El orden Fase 1 → Fase 2 (API pública antes que Reportes) fue confirmado explícitamente antes de este roadmap.
 - Fases 3 a 6 están mapeadas pero sin orden relativo confirmado todavía — se prioriza cuando corresponda.
 - Este documento no reemplaza los specs de tarea puntual (`2026-09-18-activaciones-tabla.md`, `2026-09-18-informe-decision-insumo.md`, `2026-09-18-utm-manychat-y-disparo-campanas.md`) — los referencia.
 - **Pivot 2026-09-23:** Conocimiento y Voz salen del panel de este CRM (otro sector de Taquión los construye) — ver `specs/2026-09-23-pivot-leads-whatsapp.md` para el detalle completo y el pendiente de auditoría sobre `activo_tipo`.
+- **Reencuadre 2026-09-24 (reunión Jazleidis/Juan, 2026-09-23):** medición/tracking/cohortes pasa a ser la prioridad, por delante de Activaciones avanzadas (Fase 4, diferida) — ver `specs/2026-09-24-medicion-y-cohortes.md`.
